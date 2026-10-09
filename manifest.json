@@ -1,7 +1,7 @@
 {
   "name": "Injury Reports",
   "short_name": "Injuries",
-  "description": "Live NFL, MLB, NBA and college football injury reports for any team.",
+  "description": "Live NFL, MLB and NBA injury reports for any team, plus your fantasy players.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

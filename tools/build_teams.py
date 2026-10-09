@@ -7,7 +7,7 @@ def get(u):
             print('retry', u, e); time.sleep(2*(a+1))
     raise SystemExit('failed '+u)
 out = {}
-paths = {'nfl':'football/nfl','mlb':'baseball/mlb','nba':'basketball/nba','ncaaf':'football/college-football'}
+paths = {'nfl':'football/nfl','mlb':'baseball/mlb','nba':'basketball/nba'}
 def logo(t):
     for l in t.get('logos',[]):
         if 'default' in l.get('rel',[]): return l['href']
@@ -19,24 +19,12 @@ def dark(t):
 for k,p in paths.items():
     d = get(f'https://site.api.espn.com/apis/site/v2/sports/{p}/teams?limit=1000')
     teams = {t['team']['id']: t['team'] for t in d['sports'][0]['leagues'][0]['teams']}
-    conf = {}
-    if k == 'ncaaf':
-        base='https://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2026/types/2/groups/80/children?limit=50'
-        for c in get(base)['items']:
-            g = get(c['$ref'].replace('http://','https://'))
-            name = g.get('shortName') or g.get('name')
-            tl = get(g['teams']['$ref'].replace('http://','https://') + ('&' if '?' in g['teams']['$ref'] else '?') + 'limit=100')
-            for it in tl['items']:
-                tid = re.search(r'/teams/(\d+)', it['$ref']).group(1)
-                conf[tid] = name
-        ids = [i for i in conf if i in teams]
-    else:
-        ids = list(teams)
+    ids = list(teams)
     out[k] = sorted([{
         'id': i, 'name': teams[i]['displayName'], 'short': teams[i].get('shortDisplayName') or teams[i].get('location'),
         'nick': teams[i].get('name') or teams[i].get('nickname',''), 'loc': teams[i].get('location',''), 'abbr': teams[i].get('abbreviation',''),
         'color': teams[i].get('color','333333'), 'alt': teams[i].get('alternateColor','777777'),
-        'logo': logo(teams[i]), 'logoDark': dark(teams[i]), 'conf': conf.get(i,'')
+        'logo': logo(teams[i]), 'logoDark': dark(teams[i])
     } for i in ids], key=lambda t: t['name'])
     print(k, len(out[k]))
 json.dump(out, open('teams.json','w'), separators=(',',':'))
