@@ -77,12 +77,12 @@ async function renderPushPanel(){
   if(!document.body.contains(el))return;
   if(Notification.permission==='denied'&&!on){el.innerHTML=`🔕<div><b>Notifications are blocked</b><br><span style="opacity:.75">Allow notifications for this site in your browser or phone settings, then come back.</span></div>`;return;}
   el.innerHTML=on
-    ?`🔔<div><b>Push alerts on</b><br><span style="opacity:.75">Following ${f.teams.length} team${f.teams.length!==1?'s':''} · ${f.players.length} player${f.players.length!==1?'s':''}</span></div><button id="pushTest" style="background:rgba(255,255,255,.14)">Send test</button><button id="pushOff" style="background:rgba(255,255,255,.08);margin-left:0">Turn off</button>`+hint
+    ?`🔔<div><b>Push alerts on</b><br><span style="opacity:.75">Following ${f.teams.length} team${f.teams.length!==1?'s':''} · ${f.players.length} player${f.players.length!==1?'s':''}</span></div><div style="width:100%;display:flex;gap:8px;margin-top:10px"><button id="pushTest" style="flex:1;margin:0">🧪 Send test alert</button><button id="pushOff" style="flex:1;margin:0;background:rgba(255,255,255,.12)">Turn off</button></div>`+hint
     :`🔔<div><b>Push alerts</b><br><span style="opacity:.75">${nf?`For your ${nf} followed team${nf!==1?'s':''}/player${nf!==1?'s':''}`:'Star teams or add players to follow them'}</span></div><button id="pushOn">Enable</button>`+hint;
   const on1=el.querySelector('#pushOn'),off=el.querySelector('#pushOff'),tst=el.querySelector('#pushTest');
-  if(on1)on1.onclick=async()=>{on1.disabled=true;on1.textContent='…';try{if(await enablePush())toast('Push alerts on · test alert sent');}catch(e){toast('Couldn\'t turn on alerts: '+e.message);}renderPushPanel();};
+  if(on1)on1.onclick=async()=>{on1.disabled=true;on1.textContent='Turning on…';try{if(await enablePush())toast('Push alerts on · test alert sent');}catch(e){toast('Couldn\'t turn on alerts: '+e.message);}renderPushPanel();};
   if(off)off.onclick=async()=>{off.disabled=true;await disablePush();toast('Push alerts off');renderPushPanel();};
-  if(tst)tst.onclick=async()=>{tst.disabled=true;tst.textContent='Sending…';try{await sendTestPush();toast('Test alert sent');}catch(e){toast('Test failed: '+e.message);}tst.disabled=false;tst.textContent='Send test';};
+  if(tst)tst.onclick=async()=>{tst.disabled=true;tst.textContent='Sending…';try{await sendTestPush();toast('Test alert sent');}catch(e){toast('Test failed: '+e.message);}tst.disabled=false;tst.textContent='🧪 Send test alert';};
 }
 
 // A push arrived while the app is open: refresh so "What's new" and the lists update immediately
