@@ -15,13 +15,19 @@ function norm(ev,lg){
     return{id:String(t.id||x.id||''),abbr:t.abbreviation||'',name:t.shortDisplayName||t.displayName||t.name||'TBD',logo:t.logo||'',score:x.score,winner:!!x.winner,rec:rec?rec.summary:''};};
   const comps=c.competitors||[];
   const home=team(comps.find(x=>x.homeAway==='home')||comps[0]||{}),away=team(comps.find(x=>x.homeAway==='away')||comps[1]||{});
-  const bc=[...new Set([...(c.broadcasts||[]).flatMap(b=>b.names||[]),...(c.geoBroadcasts||[]).map(g=>(g.media||{}).shortName).filter(Boolean)])];
+  // Where to watch: geoBroadcasts (type TV/Streaming/Radio, market National/Home/Away); fall back to broadcasts[]. Radio is skipped.
+  const watch=[];const seenW=new Set();
+  const addW=(name,kind,market)=>{if(!name)return;const m=String(market||'national').toLowerCase();const local=m==='home'||m==='away';
+    const ab=local?(m==='home'?home.abbr:away.abbr):'';const k=name+'|'+ab;if(seenW.has(k))return;seenW.add(k);watch.push({name,kind,local,team:ab});};
+  for(const g of c.geoBroadcasts||[]){const t=String((g.type||{}).shortName||'TV').toLowerCase();if(t==='radio')continue;addW((g.media||{}).shortName,t==='streaming'?'stream':'tv',(g.market||{}).type);}
+  if(!watch.length)for(const b of c.broadcasts||[])for(const n of b.names||[])addW(n,'tv',b.market);
+  const rank=w=>(w.local?2:0)+(w.kind==='stream'?1:0);watch.sort((a,b)=>rank(a)-rank(b));
   const od=(c.odds||[])[0];
   const series=c.series&&c.series.summary?c.series.summary:'';
   const note=[((c.notes||[])[0]||{}).headline,series].filter(Boolean).join(' · ');
   const sit=c.situation||null;
   return{id:ev.id,lg,date:Date.parse(ev.date||c.date),state:ty.state||'pre',completed:!!ty.completed,detail:ty.shortDetail||ty.detail||'',desc:ty.description||'',
-    home,away,tv:bc.slice(0,3).join(', '),odds:od?[od.details,od.overUnder!=null?'O/U '+od.overUnder:''].filter(Boolean).join(' · '):'',note,sit,venue:(c.venue||{}).fullName||''};
+    home,away,watch,odds:od?[od.details,od.overUnder!=null?'O/U '+od.overUnder:''].filter(Boolean).join(' · '):'',note,sit,venue:(c.venue||{}).fullName||''};
 }
 async function fetchBoard(lg,date){
   const u=`${HOST}/apis/site/v2/sports/${LEAGUES[lg].path}/scoreboard?${date?'dates='+date+'&':''}limit=100&_=${Date.now()}`;
@@ -78,6 +84,10 @@ function teamRow(g,t,other,mine){
     ${n?`<span class="inj" title="On injury report">🩹${n}</span>`:''}
     ${showScore?`<span class="sc">${esc(t.score)}</span>`:''}</div>`;
 }
+function watchRow(g){
+  if(!g.watch||!g.watch.length)return'';
+  return `<div class="sc-watch"><span class="sc-wl">📺 Watch on</span>${g.watch.map(w=>`<span class="sc-ch ${w.kind==='stream'?'stream':''} ${w.local?'local':''}">${w.kind==='stream'?'▶ ':''}${esc(w.name)}${w.local?` <small>(local${w.team?' · '+esc(w.team):''})</small>`:''}</span>`).join('')}</div>`;
+}
 function card(g,mine){
   const isMine=mine.has(g.home.id)||mine.has(g.away.id);
   let st;
@@ -85,9 +95,10 @@ function card(g,mine){
   else if(g.state==='post')st=`<span class="sc-st final">${esc(g.completed?(g.detail||'Final'):(g.desc||g.detail))}</span>`;
   else st=`<span class="sc-st"><span class="sc-time">${/TBD|TBA/i.test(g.detail)?'TBD':esc(fmtTime(g.date))}</span></span>`;
   const sit=sitText(g);const last=g.state==='in'&&g.sit&&g.sit.lastPlay&&g.sit.lastPlay.text;
-  const foot=[g.tv?'📺 '+esc(g.tv):'',g.state==='pre'&&g.odds?'📈 '+esc(g.odds):'',g.state==='pre'&&g.venue?'📍 '+esc(g.venue):''].filter(Boolean);
+  const foot=[g.state==='pre'&&g.odds?'📈 '+esc(g.odds):'',g.state==='pre'&&g.venue?'📍 '+esc(g.venue):''].filter(Boolean);
   return `<div class="glass sc-g ${isMine?'mine':''} ${g.state==='in'?'live':''}">
     <div class="sc-head"><span class="note">${esc(g.note||(g.state==='pre'?dayLabel(g.date):''))}</span>${st}</div>
+    ${watchRow(g)}
     ${teamRow(g,g.away,g.home,mine)}${teamRow(g,g.home,g.away,mine)}
     ${sit?`<div class="sc-sit">${esc(sit)}</div>`:''}${last?`<div class="sc-last">${esc(last)}</div>`:''}
     ${foot.length?`<div class="sc-foot">${foot.map(f=>`<span>${f}</span>`).join('')}</div>`:''}</div>`;
