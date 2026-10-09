@@ -8,8 +8,17 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Injuries">
 <meta name="theme-color" content="#050b1f">
-<meta name="description" content="Live NFL, MLB and NBA injury reports for any team and your fantasy players.">
-<title>Injury Reports</title>
+<meta name="description" content="Free app with the latest NFL, MLB and NBA injury reports for every team, live scores and where to watch, plus fantasy player tracking with Sleeper import and injury alerts.">
+<link rel="canonical" href="https://jmedley18.github.io/injury-reports/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Injury Reports">
+<meta property="og:title" content="Injury Reports: Live NFL, MLB &amp; NBA Injury Reports">
+<meta property="og:description" content="Latest injury reports for every NFL, MLB and NBA team, live scores and where to watch, and fantasy player injury alerts. Free, installs to your phone.">
+<meta property="og:url" content="https://jmedley18.github.io/injury-reports/">
+<meta property="og:image" content="https://jmedley18.github.io/injury-reports/icon-512.png">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Injury Reports","url":"https://jmedley18.github.io/injury-reports/","applicationCategory":"SportsApplication","operatingSystem":"Any (web browser)","description":"Live NFL, MLB and NBA injury reports for every team, live scores, and fantasy player injury alerts.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<title>Injury Reports: Live NFL, MLB &amp; NBA Injury Reports, Scores &amp; Fantasy Alerts</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -185,6 +194,12 @@
   .errbox{font-size:13px;line-height:1.45;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);border-radius:12px;padding:10px 12px;margin-top:10px}
   .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);pointer-events:none;transform:translateX(-50%);background:rgba(14,26,62,.95);border:1px solid rgba(255,255,255,.2);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.45)}
 .tabs .tab{font-size:13px;letter-spacing:.2px;padding:10px 0} /* scores: 5 tabs */
+.seo-intro{margin:18px 2px 0;font-size:12.5px;line-height:1.55;opacity:.62;text-align:center} /* seo */
+.seo-intro h2{font-size:13.5px;margin-bottom:4px}
+.seo-intro p{margin:4px 0}
+.site-links{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;margin:10px 0 6px;font-size:13px}
+.site-links a{color:#c7e3ff;text-decoration:none;font-weight:600}
+.sb-note{font-size:11px;opacity:.8}
 </style>
 </head>
 <body>
@@ -203,6 +218,14 @@
     <div id="adSlot"></div><!-- ads -->
     <div id="view"></div>
     <div class="foot">Data: ESPN public injury feed and scoreboard, loaded live each time you open or refresh (and every 5 min while open).<br>Statuses are as reported by teams/leagues and may lag official reports.</div>
+    <section class="seo-intro"><!-- seo: static, crawlable content -->
+      <h2>Live NFL, MLB &amp; NBA injury reports</h2>
+      <p>Injury Reports is a free web app that shows the latest injury report for every NFL, MLB and NBA team: who is Out, Doubtful, Questionable, Day-to-Day or on the Injured List, with the injury, an estimated return date and the latest note. Track your fantasy players with My Players (search, paste a list or import a Sleeper roster), get alerts when a status changes, and check live scores, upcoming games and where to watch.</p>
+      <p>Data comes from ESPN's public sports feeds and is loaded live. Not affiliated with ESPN, the NFL, MLB or the NBA. Add it to your home screen for an app-like experience.</p>
+      <noscript><p><b>JavaScript is required to load live injury reports.</b></p></noscript>
+      <nav class="site-links" aria-label="Site pages"><a href="about.html">About</a><a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms of Use</a><a href="contact.html">Contact</a></nav>
+      <p class="sb-note">Sportsbook links are for 21+ in eligible states only. Gambling problem? Call 1-800-GAMBLER.</p>
+    </section>
   </div>
   <div id="sheet" class="hidden"><div class="sh" id="shc"></div></div>
 

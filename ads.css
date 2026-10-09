@@ -16,3 +16,6 @@
 .ad-dots i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3)}
 .ad-dots i.on{background:#fff}
 @media (prefers-reduced-motion:reduce){.ad a.ad-link{transition:none}}
+#adGs{width:100%}
+.ad-gs{width:100%;margin:0 0 12px;padding:6px 6px 8px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);min-height:60px}
+.ad-gs-label{font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;opacity:.55;margin:0 4px 4px}

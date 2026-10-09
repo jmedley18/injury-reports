@@ -1,0 +1,25 @@
+/* Static content pages (About, Privacy, Terms, Contact) */
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#050b1f}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#e8eefc;min-height:100vh;line-height:1.6;
+  background:radial-gradient(ellipse at 50% -10%,#1e3a8a 0%,#0b1a45 38%,#050b1f 75%) fixed;padding:calc(env(safe-area-inset-top) + 10px) 16px calc(env(safe-area-inset-bottom) + 30px)}
+.wrap{max-width:720px;margin:0 auto}
+header{display:flex;align-items:center;gap:12px;margin:12px 0 18px}
+header a{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none}
+header img{width:44px;height:44px;border-radius:12px;box-shadow:0 4px 20px rgba(239,68,68,.45)}
+header b{font-size:22px;letter-spacing:-.4px;background:linear-gradient(90deg,#fff,#c7e3ff 55%,#86efac);-webkit-background-clip:text;background-clip:text;color:transparent}
+.open{margin-left:auto;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff!important;text-decoration:none;font-weight:700;font-size:14px;padding:9px 14px;border-radius:12px;box-shadow:0 6px 18px rgba(239,68,68,.35);white-space:nowrap}
+.card{background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.13);border-radius:20px;padding:20px 18px;box-shadow:0 8px 32px rgba(0,0,0,.28)}
+h1{font-size:26px;line-height:1.2;margin-bottom:6px;color:#fff}
+.eff{font-size:13px;opacity:.65;margin-bottom:16px}
+h2{font-size:18px;margin:22px 0 6px;color:#fff}
+p,li{font-size:15.5px}
+p{margin:8px 0}
+ul{margin:8px 0 8px 22px}
+li{margin:4px 0}
+a{color:#86efac}
+.fine{font-size:12.5px;opacity:.7}
+nav.pages{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin:22px 0 6px;font-size:13.5px}
+nav.pages a{color:#c7e3ff;text-decoration:none;opacity:.85}
+nav.pages a[aria-current]{color:#fff;font-weight:700;opacity:1}
+.copy{text-align:center;font-size:12px;opacity:.5}

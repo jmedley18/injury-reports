@@ -1,4 +1,11 @@
-/* Rotating referral banner for Joe's sportsbook links. Self-contained: renders into #adSlot. */
+/* Ad banner slot (#adSlot): rotating sportsbook referral banner + optional Google AdSense unit. Self-contained. */
+/* ===== AdSense config: fill these in after AdSense approval. While ADSENSE_CLIENT is '', nothing from Google loads. ===== */
+const ADSENSE_CLIENT='';   // your publisher ID, e.g. 'ca-pub-1234567890123456' (placeholder: ca-pub-XXXXXXXXXXXXXXXX)
+const ADSENSE_SLOT='';     // display ad unit ID (data-ad-slot) from AdSense > Ads > By ad unit. Empty = load the script only (Auto ads)
+const ADSENSE_MODE='alternate'; // 'replace'   = AdSense unit only, sportsbook banner never shows
+                                // 'alternate' = each app open randomly shows EITHER the AdSense unit OR the sportsbook banner
+                                // 'both'      = AdSense unit above the sportsbook banner
+// AdSense units are never rotated, refreshed, hidden or given a close button (that would break AdSense policies).
 (()=>{
 const ADS=[
   {id:'fanatics',brand:'Fanatics Sportsbook',mark:'F',cta:'Sign up with Fanatics →',url:'https://fanatics.onelink.me/5kut/19bgxs9w',
@@ -18,8 +25,31 @@ function paint(el,a){
   const l=el.querySelector('.ad-link');l.href=a.url;l.setAttribute('aria-label',`${a.brand}: ${a.cta.replace(' →','')} (advertisement, opens in new tab)`);l.dataset.ad=a.id;l.innerHTML=linkInner(a);
   el.querySelectorAll('.ad-dots i').forEach((d,k)=>d.classList.toggle('on',k===i));
 }
+const ADSENSE_ON=/^ca-pub-\d{10,}$/.test(ADSENSE_CLIENT);
+let adsenseLoaded=false;
+function loadAdsense(){
+  if(!ADSENSE_ON||adsenseLoaded)return;adsenseLoaded=true;
+  const sc=document.createElement('script');sc.async=true;sc.crossOrigin='anonymous';
+  sc.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client='+encodeURIComponent(ADSENSE_CLIENT);
+  document.head.appendChild(sc);
+}
+function mountAdsense(host){
+  if(!ADSENSE_ON||!ADSENSE_SLOT)return false;
+  const d=document.createElement('div');d.className='ad-gs';
+  d.innerHTML=`<div class="ad-gs-label">Advertisement</div><ins class="adsbygoogle" style="display:block" data-ad-client="${esc(ADSENSE_CLIENT)}" data-ad-slot="${esc(ADSENSE_SLOT)}" data-ad-format="auto" data-full-width-responsive="true"></ins>`;
+  host.appendChild(d);
+  try{(window.adsbygoogle=window.adsbygoogle||[]).push({});}catch(e){}
+  return true;
+}
+// decide once per app open which units show
+const SHOW_GS=ADSENSE_ON&&!!ADSENSE_SLOT&&(ADSENSE_MODE==='replace'||ADSENSE_MODE==='both'||(ADSENSE_MODE==='alternate'&&Math.random()<.5));
+const SHOW_SB=!(SHOW_GS&&(ADSENSE_MODE==='replace'||ADSENSE_MODE==='alternate'));
+let gsMounted=false;
 function mount(){
   const slot=document.getElementById('adSlot');if(!slot)return;
+  loadAdsense();
+  if(SHOW_GS&&!gsMounted){let g=document.getElementById('adGs');if(!g){g=document.createElement('div');g.id='adGs';slot.parentNode.insertBefore(g,slot);}gsMounted=mountAdsense(g);}
+  if(!SHOW_SB){slot.innerHTML='';return;}
   if(sessionStorage.getItem(KEY)==='1'){slot.innerHTML='';return;}
   slot.innerHTML=`<div class="ad" role="complementary" aria-label="Advertisement"><a class="ad-link" target="_blank" rel="sponsored noopener"></a>
     <span class="ad-tag">Ad</span><button class="ad-x" aria-label="Hide ad for this session">✕</button>
@@ -34,5 +64,5 @@ function mount(){
   },ROTATE_MS);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
-window.IRAds={mount,ads:ADS};
+window.IRAds={mount,ads:ADS,adsense:{on:ADSENSE_ON,slot:ADSENSE_SLOT,mode:ADSENSE_MODE,showGs:SHOW_GS,showSb:SHOW_SB}};
 })();

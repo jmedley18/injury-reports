@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://jmedley18.github.io/injury-reports/sitemap.xml
