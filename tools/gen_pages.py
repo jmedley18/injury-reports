@@ -1,5 +1,5 @@
 import html
-BASE='https://jmedley18.github.io/injury-reports/'
+BASE='https://medleyfinds.com/'
 EFF='October 9, 2026'
 NAV=[('index.html','Open the app'),('about.html','About'),('privacy.html','Privacy Policy'),('terms.html','Terms of Use'),('contact.html','Contact')]
 def page(fn,title,desc,body):
