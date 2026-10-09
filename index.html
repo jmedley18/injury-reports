@@ -205,6 +205,7 @@
   <div id="sheet" class="hidden"><div class="sh" id="shc"></div></div>
 
 <script src="scores.js"></script><!-- scores -->
+<script src="push.js"></script><!-- push -->
 <script>
 const $=id=>document.getElementById(id);
 const LEAGUES={
@@ -231,7 +232,7 @@ let curRoster=LS.get('ir_roster_cur',rosters[0]?rosters[0].id:null);
 let seenP=LS.get('ir_seen_p',{});   // player key -> last seen status ('' = healthy / no report)
 let seenT=LS.get('ir_seen_t',{});   // 'lg:teamId' -> {playerKey:{s,n}}
 let news=LS.get('ir_news',[]);      // unacknowledged changes
-const saveRosters=()=>{LS.set('ir_rosters',rosters);LS.set('ir_roster_cur',curRoster);};
+const saveRosters=()=>{LS.set('ir_rosters',rosters);LS.set('ir_roster_cur',curRoster);schedulePushSync();/* push */};
 const saveSeen=()=>{LS.set('ir_seen_p',seenP);LS.set('ir_seen_t',seenT);LS.set('ir_news',news);};
 const roster=()=>rosters.find(r=>r.id===curRoster)||rosters[0]||null;
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -326,7 +327,7 @@ const entryKey=(lg,e)=>pkey(lg,e.aid,e.n,e.abbr);
 const favKey=(lg,id)=>lg+':'+id;
 const isFav=(lg,id)=>favs.includes(favKey(lg,id));
 function toggleFav(lg,id){const k=favKey(lg,id);if(isFav(lg,id)){favs=favs.filter(x=>x!==k);delete seenT[k];}else{favs=[...favs,k];baseline();}
-  LS.set('ir_favs',favs);saveSeen();render();}
+  LS.set('ir_favs',favs);schedulePushSync();/* push */saveSeen();render();}
 const teamBy=(lg,id)=>TEAMS[lg]&&TEAMS[lg].find(t=>t.id===String(id));
 const teamByAbbr=(lg,a)=>TEAMS[lg]&&TEAMS[lg].find(t=>t.abbr===(lg==='nfl'?(TEAMFIX[a]||a):a));
 
@@ -367,7 +368,7 @@ function checkChanges(){
 }
 const newsFor=k=>news.find(n=>n.key===k);
 function notify(items){
-  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  if(!('Notification' in window)||Notification.permission!=='granted'||pushOn())return; /* push: server sends these when on */
   const lines=items.slice(0,4).map(i=>`${i.n}: ${i.from||'Healthy'} → ${i.to||'Cleared'}`);
   if(items.length>4)lines.push(`+${items.length-4} more`);
   const title=items.length===1?`Injury update: ${items[0].n}`:`${items.length} injury updates`;
@@ -499,11 +500,7 @@ function newsHtml(){
     ${news.slice(0,12).map(n=>{const t=teamByAbbr(n.lg,n.team);return `<div class="ni" ${t?`data-go="${n.lg}/${t.id}"`:''}>${t?`<img src="${esc(t.logo)}" alt="">`:''}<div class="nb"><b>${esc(n.n)}</b> · ${esc(n.from||'Healthy')} → <b>${esc(n.to||'Cleared')}</b><small>${esc(LEAGUES[n.lg]?LEAGUES[n.lg].label:'')} ${esc(n.team||'')} · ${esc(n.why||'')} · ${esc(ago(n.t))}</small></div><span class="ntag k-${n.kind}">${KIND[n.kind]}</span></div>`;}).join('')}
     ${news.length>12?`<div class="note">+${news.length-12} more</div>`:''}</div>`;
 }
-function alertHtml(){
-  if(!('Notification' in window))return `<div class="glass alertbar">🔔<div>Change alerts show here in the app. <span style="opacity:.65">For phone notifications on iPhone, add this app to your Home Screen first.</span></div></div>`;
-  if(Notification.permission==='default')return `<div class="glass alertbar">🔔<div>Get a notification when a status changes <span style="opacity:.65">(checked whenever the app is open)</span></div><button id="notif">Turn on</button></div>`;
-  return '';
-}
+function alertHtml(){return pushPanelHtml();} /* push: one alerts control */
 function renderMine(){
   const r=roster();
   let h=newsHtml();
@@ -536,7 +533,7 @@ function wireMine(){
   v.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{location.hash=b.dataset.go;});
   v.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const r=roster();const p=r.players.find(x=>x.k===b.dataset.rm);if(!p)return;r.players=r.players.filter(x=>x.k!==p.k);saveRosters();toast(`Removed ${p.n}`);render();});
   const g=$('gotit');if(g)g.onclick=()=>{news=[];saveSeen();render();};
-  const nb=$('notif');if(nb)nb.onclick=async()=>{try{const p=await Notification.requestPermission();if(p==='granted'){toast('Alerts on');(navigator.serviceWorker?navigator.serviceWorker.ready:Promise.reject()).then(r=>r.showNotification('Injury alerts are on',{body:'You\'ll be notified of status changes when the app checks for updates.',icon:'icon-192.png',tag:'ir-hello'})).catch(()=>{});}}catch(e){}render();};
+  renderPushPanel(); /* push */
   const nr=$('newr');if(nr)nr.onclick=()=>openRosterEdit(null);
   const er=$('editr');if(er)er.onclick=()=>openRosterEdit(roster());
   wireMore();
@@ -754,7 +751,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshAll
   render();
   refreshAll(true);
 })();
-if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(()=>syncPush(false)).catch(()=>{}));
 </script>
 </body>
 </html>
