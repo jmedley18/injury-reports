@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Injuries">
+<meta name="theme-color" content="#050b1f">
+<meta name="description" content="Live NFL, MLB, NBA and college football injury reports for any team.">
+<title>Injury Reports</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://site.web.api.espn.com" crossorigin>
+<link rel="preconnect" href="https://a.espncdn.com">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{background:#050b1f}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#fff;min-height:100vh;padding:calc(env(safe-area-inset-top) + 6px) 14px calc(env(safe-area-inset-bottom) + 30px);display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
+  button{font-family:inherit}
+  /* ---------- stadium-at-night background ---------- */
+  #bg{position:fixed;inset:0;z-index:-2;overflow:hidden;background:radial-gradient(ellipse at 50% -10%,#1e3a8a 0%,#0b1a45 38%,#050b1f 75%)}
+  .beam{position:absolute;top:-8vh;width:34vmax;height:120vh;transform-origin:50% 0;background:linear-gradient(rgba(255,255,255,.28),rgba(160,200,255,.06) 55%,transparent 80%);clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);filter:blur(6px);mix-blend-mode:screen}
+  .bm1{left:-12vmax;animation:sway1 9s ease-in-out infinite alternate}
+  .bm2{right:-12vmax;animation:sway2 11s ease-in-out infinite alternate}
+  .bm3{left:30%;opacity:.45;animation:sway3 13s ease-in-out infinite alternate}
+  @keyframes sway1{from{transform:rotate(-38deg)}to{transform:rotate(-22deg)}}
+  @keyframes sway2{from{transform:rotate(36deg)}to{transform:rotate(20deg)}}
+  @keyframes sway3{from{transform:rotate(-12deg)}to{transform:rotate(14deg)}}
+  .lamp{position:absolute;top:-30px;width:150px;height:110px;border-radius:50%;background:radial-gradient(#fff 0%,rgba(190,220,255,.6) 25%,transparent 70%);filter:blur(4px)}
+  .lamp.l{left:-30px}.lamp.r{right:-30px}
+  .field{position:absolute;left:-50%;right:-50%;bottom:-8vh;height:58vh;transform:perspective(420px) rotateX(58deg);transform-origin:50% 100%;
+    background:repeating-linear-gradient(0deg,rgba(255,255,255,.22) 0 3px,transparent 3px 70px),repeating-linear-gradient(0deg,#0d6b33 0 140px,#0a5a2b 140px 280px);
+    -webkit-mask-image:linear-gradient(to top,#000 30%,transparent 100%);mask-image:linear-gradient(to top,#000 30%,transparent 100%);opacity:.75;animation:roll 14s linear infinite}
+  @keyframes roll{from{background-position:0 0,0 0}to{background-position:0 280px,0 280px}}
+  .haze{position:absolute;inset:auto 0 0 0;height:45vh;background:linear-gradient(to top,rgba(5,11,31,.75),transparent)}
+  #sparks{position:fixed;inset:0;z-index:-1;pointer-events:none}
+  @media (prefers-reduced-motion:reduce){.beam,.field{animation:none}}
+
+  .wrap{width:100%;max-width:460px}
+  header{display:flex;align-items:center;gap:12px;margin:14px 0 14px}
+  header img{width:44px;height:44px;border-radius:12px;box-shadow:0 4px 20px rgba(239,68,68,.45)}
+  h1{font-size:25px;letter-spacing:-.5px;background:linear-gradient(90deg,#fff,#c7e3ff 55%,#86efac);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{font-size:12.5px;opacity:.65}
+  .hdr-r{margin-left:auto;display:flex;gap:8px}
+  .icon-btn{flex:none;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);color:#fff;width:38px;height:38px;border-radius:12px;font-size:17px;cursor:pointer;display:grid;place-items:center}
+  .icon-btn:active{transform:scale(.94)}
+  .spin{animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+  .glass{width:100%;background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.13);border-radius:20px;padding:14px;margin-bottom:12px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 8px 32px rgba(0,0,0,.28)}
+  /* league tabs */
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:5px;border-radius:16px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.1);margin-bottom:12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .tab{border:none;background:transparent;color:#fff;opacity:.7;padding:10px 0;border-radius:12px;font-weight:800;font-size:14px;letter-spacing:.5px;cursor:pointer}
+  .tab.on{opacity:1;background:linear-gradient(135deg,#ef4444,#f97316);box-shadow:0 6px 18px rgba(239,68,68,.4)}
+  .meta{display:flex;align-items:center;gap:8px;font-size:12px;opacity:.85;margin:0 2px 10px;flex-wrap:wrap}
+  .pill{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:rgba(134,239,172,.16);color:#bbf7d0;border:1px solid rgba(134,239,172,.25)}
+  .pill.warn{background:rgba(251,191,36,.15);color:#fde68a;border-color:rgba(251,191,36,.3)}
+  .upd{margin-left:auto;opacity:.7}
+  .search{position:relative;margin-bottom:12px}
+  .search input{width:100%;padding:12px 14px 12px 40px;border-radius:14px;border:1px solid rgba(255,255,255,.18);font-size:16px;background:rgba(255,255,255,.1);color:#fff;font-family:inherit;min-height:46px;outline:none}
+  .search input::placeholder{color:rgba(255,255,255,.55)}
+  .search input:focus{border-color:rgba(134,239,172,.6);background:rgba(255,255,255,.14)}
+  .search span{position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.6}
+  .section{font-size:11.5px;text-transform:uppercase;letter-spacing:1.3px;opacity:.6;margin:8px 4px 8px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .team{position:relative;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 6px 10px;text-align:center;cursor:pointer;color:#fff;overflow:hidden;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .team::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,var(--c) 0%,transparent 70%);opacity:.35}
+  .team:active{transform:scale(.96)}
+  .team img{position:relative;width:52px;height:52px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.4))}
+  .team .tn{position:relative;font-size:12.5px;font-weight:700;margin-top:6px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .team .tc{position:relative;font-size:10.5px;opacity:.6;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .badge{position:absolute;top:6px;right:6px;min-width:22px;height:20px;padding:0 6px;border-radius:999px;font-size:11px;font-weight:800;display:grid;place-items:center;background:#ef4444;box-shadow:0 2px 8px rgba(239,68,68,.5)}
+  .badge.zero{background:rgba(255,255,255,.16);box-shadow:none;color:#d1fae5}
+  .fav-mark{position:absolute;top:6px;left:7px;font-size:12px;color:#fde047}
+  .myrow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+  .myrow::-webkit-scrollbar{display:none}
+  .mychip{flex:none;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:5px 12px 5px 5px;color:#fff;font-size:13px;font-weight:600;cursor:pointer}
+  .mychip img{width:26px;height:26px;object-fit:contain;background:rgba(255,255,255,.9);border-radius:50%;padding:2px}
+  .mychip small{opacity:.55;font-weight:700;font-size:10px}
+  /* team view */
+  .thero{position:relative;border-radius:22px;overflow:hidden;padding:16px;margin-bottom:12px;background:linear-gradient(135deg,var(--c),var(--c2));box-shadow:0 10px 34px rgba(0,0,0,.4)}
+  .thero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.45))}
+  .thero>*{position:relative;z-index:1}
+  .trow{display:flex;align-items:center;gap:12px}
+  .trow img{width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));background:rgba(255,255,255,.92);border-radius:18px;padding:6px}
+  .tname{font-size:21px;font-weight:800;line-height:1.15}
+  .tsub{font-size:12.5px;opacity:.8;margin-top:2px}
+  .back{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:12px;padding:7px 12px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:12px}
+  .star{margin-left:auto;font-size:22px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2)}
+  .star.on{color:#fde047}
+  .sumrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+  .sum{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.15)}
+  .p{display:flex;gap:12px;align-items:flex-start;position:relative;overflow:hidden;padding-left:18px}
+  .p::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--s)}
+  .p .hs{flex:none;width:52px;height:52px;border-radius:50%;object-fit:cover;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.18)}
+  .p .hs.ph{display:grid;place-items:center;font-weight:800;font-size:17px;color:rgba(255,255,255,.75)}
+  .pb{flex:1;min-width:0}
+  .ptop{display:flex;align-items:flex-start;gap:8px}
+  .pname{font-size:16.5px;font-weight:700;line-height:1.2}
+  .pname a{color:#fff;text-decoration:none}
+  .ppos{font-size:12px;opacity:.65;margin-top:1px}
+  .st{flex:none;margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:4px 9px;border-radius:999px;background:var(--sb);color:var(--st);border:1px solid var(--s);white-space:nowrap}
+  .inj{font-size:13.5px;font-weight:600;margin-top:7px;color:#e0f2fe}
+  .inj span{opacity:.7;font-weight:500}
+  .cmt{font-size:13px;line-height:1.45;opacity:.85;margin-top:6px}
+  .more{background:none;border:none;color:#86efac;font-size:12.5px;font-weight:600;padding:4px 0 0;cursor:pointer}
+  .pdate{font-size:11.5px;opacity:.55;margin-top:7px}
+  .empty{text-align:center;font-size:14.5px;line-height:1.5;padding:22px 14px}
+  .empty .big{font-size:38px;margin-bottom:6px}
+  .empty small{display:block;opacity:.65;font-size:12.5px;margin-top:8px}
+  .toggle{width:100%;background:rgba(255,255,255,.08);border:1px dashed rgba(255,255,255,.25);color:#fff;border-radius:14px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:12px}
+  .err{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.35);font-size:13.5px;line-height:1.45}
+  .foot{font-size:11px;opacity:.45;text-align:center;margin-top:14px;line-height:1.5}
+  .hidden{display:none!important}
+  #ptr{position:fixed;top:calc(env(safe-area-inset-top) + 6px);left:50%;transform:translate(-50%,-70px);z-index:20;width:40px;height:40px;border-radius:50%;background:rgba(15,25,60,.9);border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;font-size:18px;transition:transform .2s;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+  .skel{height:84px;border-radius:20px;margin-bottom:12px;background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.13),rgba(255,255,255,.06));background-size:200% 100%;animation:sh 1.2s infinite}
+  @keyframes sh{to{background-position:-200% 0}}
+</style>
+</head>
+<body>
+  <div id="bg"><div class="beam bm1"></div><div class="beam bm2"></div><div class="beam bm3"></div><div class="lamp l"></div><div class="lamp r"></div><div class="field"></div><div class="haze"></div></div>
+  <canvas id="sparks"></canvas>
+  <div id="ptr">↻</div>
+
+  <div class="wrap">
+    <header>
+      <img src="icon-192.png" alt="">
+      <div><h1>Injury Reports</h1><div class="sub">Live team injury reports</div></div>
+      <div class="hdr-r"><button class="icon-btn" id="refresh" aria-label="Refresh">↻</button></div>
+    </header>
+    <div class="tabs" id="tabs"></div>
+    <div class="meta"><span class="pill" id="season">…</span><span class="upd" id="upd"></span></div>
+    <div id="view"></div>
+    <div class="foot">Data: ESPN public injury feed, loaded live each time you open or refresh.<br>Statuses are as reported by teams/leagues and may lag official reports.</div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const LEAGUES={
+  nfl:{label:'NFL',path:'football/nfl'},
+  mlb:{label:'MLB',path:'baseball/mlb'},
+  nba:{label:'NBA',path:'basketball/nba'},
+  ncaaf:{label:'NCAAF',path:'football/college-football'}
+};
+const HOSTS=['https://site.web.api.espn.com','https://site.api.espn.com'];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let TEAMS=null; const DATA={}; const LOADING={};
+let favs=JSON.parse(localStorage.getItem('ir_favs')||'[]');
+let state={league:localStorage.getItem('ir_league')||'nfl',team:null,q:'',showCleared:false};
+
+/* ---------- status styling ---------- */
+function sev(s){s=(s||'').toLowerCase();
+  if(s==='active')return 9;
+  if(/injured reserve|60-day|season|suspen|pup|nfi/.test(s))return 0;
+  if(s==='out')return 1;
+  if(/il|injured list/.test(s))return 2;
+  if(/doubtful/.test(s))return 3;
+  if(/questionable|day-to-day|gtd/.test(s))return 4;
+  if(/probable/.test(s))return 5;
+  return 6;}
+const SEVCOL=[['#ef4444','rgba(239,68,68,.2)','#fecaca'],['#f43f5e','rgba(244,63,94,.2)','#fecdd3'],['#fb7185','rgba(251,113,133,.18)','#ffe4e6'],['#f97316','rgba(249,115,22,.2)','#fed7aa'],['#facc15','rgba(250,204,21,.18)','#fef08a'],['#a3e635','rgba(163,230,53,.18)','#ecfccb'],['#60a5fa','rgba(96,165,250,.18)','#dbeafe'],,,['#22c55e','rgba(34,197,94,.18)','#bbf7d0']];
+const colOf=s=>SEVCOL[sev(s)]||SEVCOL[6];
+
+/* ---------- time helpers ---------- */
+function ago(d){const m=Math.round((Date.now()-d)/60000);
+  if(m<1)return'just now';if(m<60)return m+' min ago';const h=Math.round(m/60);if(h<24)return h+' hr ago';const dd=Math.round(h/24);if(dd<30)return dd+(dd===1?' day ago':' days ago');
+  return new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});}
+const fmtDate=d=>new Date(d).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+
+/* ---------- data ---------- */
+// Entries older than this are treated as stale leftovers in the feed and hidden (e.g. 2020-era college entries).
+const STALE_MS=300*864e5;
+function slim(raw){
+  const teams={};
+  for(const t of raw.injuries||[]){
+    const list=[];
+    for(const i of t.injuries||[]){
+      const a=i.athlete||{},d=i.details||{};
+      const date=Date.parse(i.date)||0;
+      if(date&&Date.now()-date>STALE_MS)continue;
+      const link=(a.links||[]).find(l=>(l.rel||[]).includes('playercard'));
+      list.push({n:a.displayName||'Unknown',pos:(a.position||{}).abbreviation||'',posName:(a.position||{}).displayName||'',hs:(a.headshot||{}).href||'',
+        url:link?link.href:'',st:i.status||'',fs:((d.fantasyStatus||{}).description)||'',type:d.type||'',loc:d.location||'',det:d.detail||'',side:d.side||'',ret:d.returnDate||'',
+        sc:i.shortComment||'',lc:i.longComment||'',date});
+    }
+    list.sort((x,y)=>sev(x.st)-sev(y.st)||y.date-x.date);
+    teams[t.id]=list;
+  }
+  return {ts:Date.parse(raw.timestamp)||Date.now(),season:raw.season||{},teams,fetched:Date.now()};
+}
+async function load(lg,force){
+  if(!force&&DATA[lg]&&!DATA[lg].offline&&Date.now()-DATA[lg].fetched<120000)return DATA[lg];
+  if(LOADING[lg])return LOADING[lg];
+  LOADING[lg]=(async()=>{
+    let lastErr;
+    for(const h of HOSTS){
+      try{
+        const r=await fetch(`${h}/apis/site/v2/sports/${LEAGUES[lg].path}/injuries?_=${Date.now()}`,{cache:'no-store'});
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        const d=slim(await r.json());
+        DATA[lg]=d;
+        try{localStorage.setItem('ir_cache_'+lg,JSON.stringify(d));}catch(e){}
+        return d;
+      }catch(e){lastErr=e;}
+    }
+    const c=localStorage.getItem('ir_cache_'+lg);
+    if(c){const d=JSON.parse(c);d.offline=true;DATA[lg]=d;return d;}
+    throw lastErr||new Error('Could not load');
+  })();
+  try{return await LOADING[lg];}finally{LOADING[lg]=null;}
+}
+const activeCount=list=>(list||[]).filter(p=>p.st.toLowerCase()!=='active').length;
+
+/* ---------- favorites ---------- */
+const favKey=(lg,id)=>lg+':'+id;
+const isFav=(lg,id)=>favs.includes(favKey(lg,id));
+function toggleFav(lg,id){const k=favKey(lg,id);favs=isFav(lg,id)?favs.filter(x=>x!==k):[...favs,k];localStorage.setItem('ir_favs',JSON.stringify(favs));render();}
+const teamBy=(lg,id)=>TEAMS[lg].find(t=>t.id===String(id));
+
+/* ---------- routing ---------- */
+function parseHash(){const [lg,id]=location.hash.slice(1).split('/');
+  if(LEAGUES[lg]){state.league=lg;state.team=id||null;}else{state.team=null;}
+  localStorage.setItem('ir_league',state.league);}
+window.addEventListener('hashchange',()=>{const pl=state.league;parseHash();if(pl!==state.league)state.q='';state.showCleared=false;render();refreshCurrent(false);window.scrollTo(0,0);});
+
+/* ---------- rendering ---------- */
+function renderTabs(){
+  $('tabs').innerHTML=Object.entries(LEAGUES).map(([k,v])=>`<button class="tab ${k===state.league?'on':''}" data-lg="${k}">${v.label}</button>`).join('');
+  $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{location.hash=b.dataset.lg;});
+}
+function renderMeta(){
+  const d=DATA[state.league];
+  if(!d){$('season').textContent='Loading…';$('season').className='pill';$('upd').textContent='';return;}
+  const s=d.season||{};const nm=s.name||'';
+  $('season').textContent=((s.displayName||'')+' '+nm).trim()||LEAGUES[state.league].label;
+  $('season').className='pill'+(/pre|off/i.test(nm)?' warn':'');
+  $('upd').textContent=(d.offline?'Offline · saved ':'Updated ')+ago(d.fetched);
+  $('upd').title='ESPN feed timestamp: '+fmtDate(d.ts);
+}
+function teamCard(lg,t){
+  const d=DATA[lg];const n=d?activeCount(d.teams[t.id]):null;
+  return `<button class="team" style="--c:#${esc(t.color)}" data-id="${t.id}">
+    ${isFav(lg,t.id)?'<span class="fav-mark">★</span>':''}
+    ${n===null?'':`<span class="badge ${n?'':'zero'}">${n}</span>`}
+    <img src="${esc(t.logo)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+    <div class="tn">${esc(lg==='ncaaf'?t.short:t.nick||t.short)}</div>
+    <div class="tc">${esc(lg==='ncaaf'?t.conf:t.loc)}</div></button>`;
+}
+function renderList(){
+  const lg=state.league,q=state.q.trim().toLowerCase();
+  const all=TEAMS[lg];
+  const match=t=>!q||[t.name,t.short,t.abbr,t.conf,t.nick].join(' ').toLowerCase().includes(q);
+  const fav=all.filter(t=>isFav(lg,t.id)&&match(t));
+  const rest=all.filter(t=>!isFav(lg,t.id)&&match(t));
+  // My teams across all leagues
+  const others=favs.map(k=>k.split(':')).filter(([l])=>l!==lg&&TEAMS[l]).map(([l,id])=>[l,teamBy(l,id)]).filter(x=>x[1]);
+  let h='';
+  if(others.length&&!q)h+=`<div class="section">My other teams</div><div class="myrow">${others.map(([l,t])=>`<button class="mychip" data-go="${l}/${t.id}"><img src="${esc(t.logo)}" alt="">${esc(l==='ncaaf'?t.short:t.nick)} <small>${LEAGUES[l].label}</small></button>`).join('')}</div>`;
+  if(lg==='ncaaf'&&!q)h+=`<div class="glass" style="font-size:12.5px;line-height:1.45;opacity:.9">🏈 <b>Heads up:</b> most college programs don't publish public injury reports, so ESPN's college feed is usually empty. Teams will show "no reported injuries" unless something is officially reported.</div>`;
+  if(fav.length)h+=`<div class="section">★ Favorites</div><div class="grid">${fav.map(t=>teamCard(lg,t)).join('')}</div>`;
+  if(lg==='ncaaf'&&!q){
+    const confs=[...new Set(rest.map(t=>t.conf))].sort();
+    for(const c of confs)h+=`<div class="section">${esc(c)}</div><div class="grid">${rest.filter(t=>t.conf===c).map(t=>teamCard(lg,t)).join('')}</div>`;
+  }else{
+    if(rest.length)h+=`<div class="section">${fav.length?'All teams':'Pick a team'}</div><div class="grid">${rest.map(t=>teamCard(lg,t)).join('')}</div>`;
+  }
+  if(!fav.length&&!rest.length)h+=`<div class="glass empty">No teams match "${esc(state.q)}"</div>`;
+  if(!$('q')||$('q').dataset.lg!==lg){
+    $('view').innerHTML=`<div class="search"><span>🔍</span><input id="q" type="search" data-lg="${lg}" placeholder="Search ${LEAGUES[lg].label} teams${lg==='ncaaf'?' or conferences':''}" autocomplete="off" enterkeyhint="search"></div><div id="results"></div>`;
+    const qi=$('q');qi.value=state.q;qi.oninput=()=>{state.q=qi.value;renderList();};
+  }
+  $('results').innerHTML=h;
+  $('view').querySelectorAll('.team').forEach(b=>b.onclick=()=>{location.hash=lg+'/'+b.dataset.id;});
+  $('view').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{location.hash=b.dataset.go;});
+}
+function injLine(p){
+  const parts=[p.side&&!/not specified/i.test(p.side)?p.side:'',p.type,p.det&&!/not specified/i.test(p.det)&&p.det.toLowerCase()!==String(p.type).toLowerCase()?p.det:''].filter(Boolean);
+  let s=parts.length?esc(parts.join(' ')):'';
+  if(p.ret){const r=Date.parse(p.ret+'T12:00:00');if(r)s+=` <span>· est. return ${new Date(r).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span>`;}
+  return s;
+}
+function playerCard(p,i){
+  const [c,bg,tx]=colOf(p.st);
+  const init=p.n.split(' ').map(w=>w[0]).slice(0,2).join('');
+  const cm=p.sc&&p.sc.toLowerCase()!==p.st.toLowerCase()?p.sc:'';
+  const long=p.lc&&p.lc!==p.sc&&p.lc.toLowerCase()!==p.st.toLowerCase()?p.lc:'';
+  const il=injLine(p);
+  return `<div class="glass p" style="--s:${c};--sb:${bg};--st:${tx}">
+    ${p.hs?`<img class="hs" src="${esc(p.hs)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;hs ph&quot;>${esc(init)}</div>'">`:`<div class="hs ph">${esc(init)}</div>`}
+    <div class="pb">
+      <div class="ptop"><div><div class="pname">${p.url?`<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.n)}</a>`:esc(p.n)}</div><div class="ppos">${esc(p.posName||p.pos)}</div></div>
+      <span class="st">${esc(p.st)}</span></div>
+      ${il?`<div class="inj">🩹 ${il}</div>`:''}
+      ${cm?`<div class="cmt">${esc(cm)}</div>`:''}
+      ${long?`<div class="cmt hidden" id="lc${i}">${esc(long)}</div><button class="more" data-i="${i}">More ▾</button>`:''}
+      ${p.date?`<div class="pdate">Updated ${esc(ago(p.date))} · ${esc(fmtDate(p.date))}</div>`:''}
+    </div></div>`;
+}
+function renderTeam(){
+  const lg=state.league,t=teamBy(lg,state.team);
+  if(!t){location.hash=lg;return;}
+  const d=DATA[lg];
+  const fav=isFav(lg,t.id);
+  let h=`<button class="back" id="back">‹ ${LEAGUES[lg].label} teams</button>
+  <div class="thero" style="--c:#${esc(t.color)};--c2:#${esc(t.alt&&t.alt!=='ffffff'&&t.alt!=='000000'?t.alt:'0b1a45')}">
+    <div class="trow"><img src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">
+      <div style="min-width:0"><div class="tname">${esc(t.name)}</div><div class="tsub">${esc(LEAGUES[lg].label)}${t.conf?' · '+esc(t.conf):''} · Injury report</div></div>
+      <button class="icon-btn star ${fav?'on':''}" id="fav" aria-label="Favorite">${fav?'★':'☆'}</button></div>`;
+  if(!d){h+=`</div><div class="skel"></div><div class="skel"></div><div class="skel"></div>`;$('view').innerHTML=h;wireTeam(lg,t);return;}
+  const list=d.teams[t.id]||[];
+  const inj=list.filter(p=>p.st.toLowerCase()!=='active'),cleared=list.filter(p=>p.st.toLowerCase()==='active');
+  const counts={};inj.forEach(p=>counts[p.st]=(counts[p.st]||0)+1);
+  h+=`<div class="sumrow">${inj.length?Object.entries(counts).sort((a,b)=>sev(a[0])-sev(b[0])).map(([s,n])=>{const [c]=colOf(s);return `<span class="sum" style="border-color:${c}">${n} ${esc(s)}</span>`}).join(''):'<span class="sum">No injuries listed</span>'}</div></div>`;
+  if(inj.length){h+=inj.map(playerCard).join('');}
+  else{
+    h+=`<div class="glass empty"><div class="big">${lg==='ncaaf'?'📋':'💪'}</div><b>No reported injuries right now</b>`+
+    (lg==='ncaaf'?`<small>ESPN has no current injury report for ${esc(t.short)}. Most college teams don't publish official injury reports, so this doesn't guarantee everyone is healthy. Check the team's game-week availability report for the latest.</small>`
+      :`<small>${esc(t.name)} has nobody on ESPN's injury report at the moment.</small>`)+`</div>`;
+  }
+  if(cleared.length){
+    h+=`<button class="toggle" id="cl">${state.showCleared?'Hide':'Show'} ${cleared.length} recently cleared (Active) player${cleared.length>1?'s':''}</button>`;
+    if(state.showCleared)h+=cleared.map((p,i)=>playerCard(p,'c'+i)).join('');
+  }
+  $('view').innerHTML=h;wireTeam(lg,t);
+}
+function wireTeam(lg,t){
+  $('back').onclick=()=>{location.hash=lg;};
+  $('fav').onclick=()=>toggleFav(lg,t.id);
+  const cl=$('cl');if(cl)cl.onclick=()=>{state.showCleared=!state.showCleared;renderTeam();};
+  $('view').querySelectorAll('.more').forEach(b=>b.onclick=()=>{const e=$('lc'+b.dataset.i);e.classList.toggle('hidden');b.textContent=e.classList.contains('hidden')?'More ▾':'Less ▴';});
+}
+function renderError(msg){
+  const e=document.createElement('div');e.className='glass err';e.innerHTML=`⚠️ Couldn't load the latest ${LEAGUES[state.league].label} injury report (${esc(msg)}). Check your connection and tap ↻ to try again.`;
+  $('view').prepend(e);
+}
+function render(){renderTabs();renderMeta();state.team?renderTeam():renderList();}
+
+async function refreshCurrent(force){
+  const lg=state.league;$('refresh').firstChild&&$('refresh').classList.add('spin');
+  try{await load(lg,force);if(lg===state.league){renderMeta();state.team?renderTeam():refreshBadges();}}
+  catch(e){if(lg===state.league)renderError(e.message);}
+  finally{$('refresh').classList.remove('spin');}
+}
+function refreshBadges(){renderList();} // search box is kept, only results re-render
+$('refresh').onclick=()=>refreshCurrent(true);
+setInterval(()=>{renderMeta();},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCurrent(false);});
+
+/* ---------- pull to refresh ---------- */
+(()=>{let y0=null,dy=0;const ptr=$('ptr');
+  addEventListener('touchstart',e=>{if(scrollY<=0&&e.touches.length===1){y0=e.touches[0].clientY;dy=0;}},{passive:true});
+  addEventListener('touchmove',e=>{if(y0===null)return;dy=Math.max(0,e.touches[0].clientY-y0);if(dy>0&&scrollY<=0){const p=Math.min(dy,120);ptr.style.transition='none';ptr.style.transform=`translate(-50%,${p-70}px) rotate(${p*3}deg)`;}},{passive:true});
+  addEventListener('touchend',async()=>{if(y0===null)return;ptr.style.transition='';const go=dy>80;y0=null;
+    if(go){ptr.style.transform='translate(-50%,30px)';ptr.classList.add('spin');await refreshCurrent(true);ptr.classList.remove('spin');}
+    ptr.style.transform='translate(-50%,-70px)';});
+})();
+
+/* ---------- sparks (stadium light particles) ---------- */
+(()=>{const c=$('sparks'),x=c.getContext('2d');let W,H,P=[];
+  function rs(){W=c.width=innerWidth*devicePixelRatio;H=c.height=innerHeight*devicePixelRatio;c.style.width=innerWidth+'px';c.style.height=innerHeight+'px';
+    P=Array.from({length:45},()=>({x:Math.random()*W,y:Math.random()*H,r:(Math.random()*1.4+.3)*devicePixelRatio,v:(Math.random()*.25+.05)*devicePixelRatio,a:Math.random()}));}
+  rs();addEventListener('resize',rs);
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  (function f(){x.clearRect(0,0,W,H);for(const p of P){p.y-=p.v;p.a+=.02;if(p.y<0){p.y=H;p.x=Math.random()*W;}
+    x.globalAlpha=.25+.35*Math.abs(Math.sin(p.a));x.fillStyle='#dbeafe';x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill();}
+    if(!still)requestAnimationFrame(f);})();
+})();
+
+/* ---------- boot ---------- */
+(async()=>{
+  parseHash();
+  renderTabs();renderMeta();$('view').innerHTML='<div class="skel"></div><div class="skel"></div>';
+  try{TEAMS=await (await fetch('teams.json')).json();}catch(e){$('view').innerHTML='<div class="glass err">Couldn\'t load the team list. Check your connection and reload.</div>';return;}
+  render();
+  refreshCurrent(false);
+  // warm the other leagues in the background so badges are ready when you switch
+  setTimeout(()=>Object.keys(LEAGUES).filter(l=>l!==state.league).forEach(l=>load(l).then(()=>{if(l===state.league&&!state.team)refreshBadges();}).catch(()=>{})),1500);
+})();
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
