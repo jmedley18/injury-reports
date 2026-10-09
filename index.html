@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://site.web.api.espn.com" crossorigin>
 <link rel="preconnect" href="https://a.espncdn.com">
 <link rel="stylesheet" href="scores.css"><!-- scores -->
+<link rel="stylesheet" href="ads.css"><!-- ads -->
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html{background:#050b1f}
@@ -199,6 +200,7 @@
     </header>
     <div class="tabs" id="tabs"></div>
     <div class="meta"><span class="pill" id="season">…</span><span class="upd" id="upd"></span></div>
+    <div id="adSlot"></div><!-- ads -->
     <div id="view"></div>
     <div class="foot">Data: ESPN public injury feed and scoreboard, loaded live each time you open or refresh (and every 5 min while open).<br>Statuses are as reported by teams/leagues and may lag official reports.</div>
   </div>
@@ -753,5 +755,6 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshAll
 })();
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(()=>syncPush(false)).catch(()=>{}));
 </script>
+<script src="ads.js"></script><!-- ads -->
 </body>
 </html>
