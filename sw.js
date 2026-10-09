@@ -1,7 +1,7 @@
 // App-shell cache only. Live injury data (ESPN), player search, Sleeper API, logos and headshots
 // are never intercepted or cached here, so reports are always fetched fresh from the network.
-const CACHE='injury-reports-v2';
-const ASSETS=['./','index.html','manifest.json','teams.json','icon-192.png','icon-512.png','apple-touch-icon.png','favicon.png'];
+const CACHE='injury-reports-v3';
+const ASSETS=['./','index.html','manifest.json','teams.json','icon-192.png','icon-512.png','apple-touch-icon.png','favicon.png','scores.js','scores.css'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS.map(a=>new Request(a,{cache:'reload'})))));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
 self.addEventListener('fetch',e=>{

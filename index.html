@@ -16,6 +16,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://site.web.api.espn.com" crossorigin>
 <link rel="preconnect" href="https://a.espncdn.com">
+<link rel="stylesheet" href="scores.css"><!-- scores -->
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html{background:#050b1f}
@@ -51,7 +52,7 @@
   .spin{animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
   .glass{width:100%;background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.13);border-radius:20px;padding:14px;margin-bottom:12px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 8px 32px rgba(0,0,0,.28)}
   /* league tabs */
-  .tabs{display:grid;grid-template-columns:1.15fr 1fr 1fr 1fr;gap:6px;padding:5px;border-radius:16px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.1);margin-bottom:12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .tabs{display:grid;grid-template-columns:1.15fr 1.15fr 1fr 1fr 1fr;gap:5px;padding:5px;border-radius:16px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.1);margin-bottom:12px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
   .tab{border:none;background:transparent;color:#fff;opacity:.7;padding:10px 0;border-radius:12px;font-weight:800;font-size:14px;letter-spacing:.5px;cursor:pointer}
   .tab.on{opacity:1;background:linear-gradient(135deg,#ef4444,#f97316);box-shadow:0 6px 18px rgba(239,68,68,.4)}
   .meta{display:flex;align-items:center;gap:8px;font-size:12px;opacity:.85;margin:0 2px 10px;flex-wrap:wrap}
@@ -119,7 +120,7 @@
   @keyframes sh{to{background-position:-200% 0}}
   /* ---------- v2: My Players, alerts, sheets ---------- */
   .tab{position:relative}
-  .tab .tb{position:absolute;top:2px;right:4px;min-width:18px;height:17px;padding:0 5px;border-radius:999px;background:#ef4444;font-size:10px;font-weight:800;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+  .tab .tb{position:absolute;top:-5px;right:-3px;min-width:18px;height:17px;padding:0 5px;border-radius:999px;background:#ef4444;font-size:10px;font-weight:800;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.4)}
   .tab.on .tb{background:#fff;color:#dc2626}
   .tab .dot{position:absolute;top:5px;left:8px;width:8px;height:8px;border-radius:50%;background:#fde047;box-shadow:0 0 8px #fde047}
   .rosters{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none;align-items:center}
@@ -182,6 +183,7 @@
   .warnbox{font-size:13px;line-height:1.45;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);border-radius:12px;padding:10px 12px;margin-top:10px}
   .errbox{font-size:13px;line-height:1.45;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);border-radius:12px;padding:10px 12px;margin-top:10px}
   .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);pointer-events:none;transform:translateX(-50%);background:rgba(14,26,62,.95);border:1px solid rgba(255,255,255,.2);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.tabs .tab{font-size:13px;letter-spacing:.2px;padding:10px 0} /* scores: 5 tabs */
 </style>
 </head>
 <body>
@@ -198,10 +200,11 @@
     <div class="tabs" id="tabs"></div>
     <div class="meta"><span class="pill" id="season">…</span><span class="upd" id="upd"></span></div>
     <div id="view"></div>
-    <div class="foot">Data: ESPN public injury feed, loaded live each time you open or refresh (and every 5 min while open).<br>Statuses are as reported by teams/leagues and may lag official reports.</div>
+    <div class="foot">Data: ESPN public injury feed and scoreboard, loaded live each time you open or refresh (and every 5 min while open).<br>Statuses are as reported by teams/leagues and may lag official reports.</div>
   </div>
   <div id="sheet" class="hidden"><div class="sh" id="shc"></div></div>
 
+<script src="scores.js"></script><!-- scores -->
 <script>
 const $=id=>document.getElementById(id);
 const LEAGUES={
@@ -219,7 +222,7 @@ let TEAMS=null; const DATA={}; const LOADING={};
 /* ---------- one-time cleanup from v1 (college football removed) ---------- */
 try{localStorage.removeItem('ir_cache_ncaaf');}catch(e){}
 let favs=LS.get('ir_favs',[]).filter(k=>LEAGUES[k.split(':')[0]]);LS.set('ir_favs',favs);
-let lastView=localStorage.getItem('ir_league');if(lastView!=='mine'&&!LEAGUES[lastView])lastView='nfl';
+let lastView=localStorage.getItem('ir_league');if(lastView!=='mine'&&lastView!=='scores'&&!LEAGUES[lastView])lastView='nfl';
 let state={league:lastView,team:null,q:'',showCleared:false};
 
 /* ---------- My Players storage ---------- */
@@ -375,7 +378,7 @@ function notify(items){
 
 /* ---------- routing ---------- */
 function parseHash(){const [lg,id]=location.hash.slice(1).split('/');
-  if(lg==='mine'){state.league='mine';state.team=null;}
+  if(lg==='mine'||lg==='scores'){state.league=lg;state.team=null;}
   else if(LEAGUES[lg]){state.league=lg;state.team=id||null;}else{state.team=null;}
   localStorage.setItem('ir_league',state.league);}
 window.addEventListener('hashchange',()=>{const pl=state.league;parseHash();if(pl!==state.league)state.q='';state.showCleared=false;closeSheet();render();refreshAll(false);window.scrollTo(0,0);});
@@ -385,10 +388,12 @@ function myCounts(){const r=roster();if(!r)return{inj:0,all:0};let inj=0;for(con
 function renderTabs(){
   const c=myCounts();
   $('tabs').innerHTML=`<button class="tab ${state.league==='mine'?'on':''}" data-lg="mine">${news.length?'<span class="dot"></span>':''}★ Mine${c.inj?`<span class="tb">${c.inj}</span>`:''}</button>`+
+    `<button class="tab ${state.league==='scores'?'on':''}" data-lg="scores">Scores</button>`+ /* scores */
     Object.entries(LEAGUES).map(([k,v])=>`<button class="tab ${k===state.league?'on':''}" data-lg="${k}">${v.label}</button>`).join('');
   $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{location.hash=b.dataset.lg;});
 }
 function renderMeta(){
+  if(state.league==='scores')return Scores.renderMeta(); /* scores */
   if(state.league==='mine'){
     const ds=Object.keys(LEAGUES).map(l=>DATA[l]).filter(Boolean);
     $('season').textContent='My Players';$('season').className='pill';
@@ -695,13 +700,15 @@ function renderError(msg){
 }
 function render(){
   renderTabs();renderMeta();
-  if(state.league==='mine')renderMine();else if(state.team)renderTeam();else renderList();
+  if(state.league==='scores')Scores.render(); /* scores */
+  else if(state.league==='mine')renderMine();else if(state.team)renderTeam();else renderList();
 }
 
 async function refreshAll(force){
   $('refresh').classList.add('spin');
   // load the current view's league first, then the rest (needed for My Players + starred teams + change alerts)
-  const first=state.league==='mine'?null:state.league;
+  const first=(state.league==='mine'||state.league==='scores')?null:state.league;
+  if(state.league==='scores')Scores.refresh(force); /* scores */
   let err=null;
   try{
     if(first){try{await load(first,force);}catch(e){err=e;}if(!$('sheet').classList.contains('hidden'))renderTabs();else render();}
