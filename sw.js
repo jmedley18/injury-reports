@@ -1,6 +1,6 @@
 // App-shell cache only. Live injury data (ESPN), player search, Sleeper API, logos and headshots
 // are never intercepted or cached here, so reports are always fetched fresh from the network.
-const CACHE='injury-reports-v4';
+const CACHE='injury-reports-v5';
 const ASSETS=['./','index.html','manifest.json','teams.json','icon-192.png','icon-512.png','apple-touch-icon.png','favicon.png','scores.js','scores.css','push.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS.map(a=>new Request(a,{cache:'reload'})))));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
@@ -26,9 +26,13 @@ self.addEventListener('push',e=>{
   let d={};
   try{d=e.data?e.data.json():{};}catch(err){d={title:'Injury Reports',body:e.data?e.data.text():''};}
   const title=d.title||'Injury update';
-  e.waitUntil(self.registration.showNotification(title,{
-    body:d.body||'',icon:'icon-192.png',badge:'favicon.png',tag:d.tag||'ir-push',renotify:true,data:{url:d.url||'./#mine'}
-  }));
+  e.waitUntil(Promise.all([
+    self.registration.showNotification(title,{
+      body:d.body||'',icon:'icon-192.png',badge:'favicon.png',tag:d.tag||'ir-push',renotify:true,data:{url:d.url||'./#mine'}
+    }),
+    // tell any open app window so it refreshes the reports right away
+    self.clients.matchAll({type:'window',includeUncontrolled:true}).then(cs=>cs.forEach(c=>c.postMessage({type:'ir-push',title,body:d.body||'',url:d.url||''})))
+  ]));
 });
 // If the browser rotates the subscription, re-register it (follows are carried over server-side and re-sent by the page on next open)
 self.addEventListener('pushsubscriptionchange',e=>{

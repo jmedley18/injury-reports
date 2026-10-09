@@ -84,3 +84,10 @@ async function renderPushPanel(){
   if(off)off.onclick=async()=>{off.disabled=true;await disablePush();toast('Push alerts off');renderPushPanel();};
   if(tst)tst.onclick=async()=>{tst.disabled=true;tst.textContent='Sending…';try{await sendTestPush();toast('Test alert sent');}catch(e){toast('Test failed: '+e.message);}tst.disabled=false;tst.textContent='Send test';};
 }
+
+// A push arrived while the app is open: refresh so "What's new" and the lists update immediately
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{
+  if(!e.data||e.data.type!=='ir-push')return;
+  window.__lastPush=e.data;
+  try{toast('🔔 '+e.data.title);if(typeof refreshAll==='function')refreshAll(true);}catch(err){}
+});
