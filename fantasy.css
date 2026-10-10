@@ -25,3 +25,17 @@ button.ff-ya .ff-ph{margin:0}
 .ff-add input{padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);font-size:16px;background:rgba(255,255,255,.1);color:#fff;font-family:inherit;outline:none}
 .ff-add input::placeholder{color:rgba(255,255,255,.5)}
 .sh .ff-chk input{width:20px;height:20px;padding:0}
+/* ESPN add sheet */
+.ff-row{display:flex;gap:8px;align-items:stretch}
+.ff-row input{flex:1;min-width:0;margin:0}
+.ff-row .ff-paste{width:auto;flex:none;margin:0;padding:0 14px;white-space:nowrap}
+.ff-adv{margin-top:14px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px}
+.ff-adv summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--mut,#9fb0c8);padding:6px 0;list-style:none}
+.ff-adv summary::-webkit-details-marker{display:none}
+.ff-adv summary::before{content:'▸';display:inline-block;width:1.1em}
+.ff-adv[open] summary::before{content:'▾'}
+.ff-priv{padding:14px;margin:10px 0;border:1px solid rgba(255,196,0,.35);background:rgba(255,196,0,.08);border-radius:14px}
+.ff-priv-h{font-weight:700;font-size:16px;margin-bottom:6px}
+.ff-priv p{margin:0 0 10px;font-size:14px;line-height:1.45}
+.ff-priv .btn{margin-top:6px}
+.ff-msg{width:100%;min-height:120px;margin-top:8px;font-size:13px;box-sizing:border-box}

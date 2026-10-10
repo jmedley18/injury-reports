@@ -79,7 +79,8 @@ async function espnFetch(e){
   if(e.s2||e.swid)r=await fetch(`${WORKER}/espnff`,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',body:JSON.stringify({game:'ffl',season:e.season,league:e.id,views:VIEWS,s2:e.s2||'',swid:e.swid||''})});
   else r=await fetch(`${ESPN_READS}/${e.season}/segments/0/leagues/${e.id}?${VIEWS.map(v=>'view='+v).join('&')}`,{cache:'no-store'});
   const t=await r.text();let d=null;try{d=JSON.parse(t);}catch(x){}
-  if(r.status===401){const err=new Error(e.s2?'ESPN rejected the espn_s2/SWID values (they may have expired). Update them for this league.':'This league is private. Add your espn_s2 and SWID to view it.');err.priv=true;throw err;}
+  const na=r.status===401||r.status===403||/notAuthorized|not authorized|AUTH_LEAGUE_NOT_VISIBLE/i.test(t.slice(0,600))&&!r.ok;
+  if(na){const err=new Error(e.s2?'ESPN rejected the espn_s2/SWID values (they may have expired). Update them for this league.':'This league is private. Ask your league manager to make it viewable to the public, or add espn_s2 and SWID under Advanced.');err.priv=true;throw err;}
   if(r.status===404)throw new Error(`League ${e.id} wasn't found for the ${e.season} season.`);
   if(!r.ok||!d)throw new Error('ESPN HTTP '+r.status);
   return Array.isArray(d)?d[0]:d;
@@ -204,36 +205,74 @@ async function addSleeper(){
     localStorage.setItem('ir_sleeper_user',u);F.hub=null;F.hubErr=null;toast('Added @'+(x.display_name||u));draw();refresh(true);
   }catch(e){toast(e.message);$('fsladd').disabled=false;}
 }
+/* ESPN add: one field (link or ID). Public fetch first; private leagues get a friendly "ask your LM" card.
+   espn_s2/SWID live under a closed "Advanced" section. */
+function parseEspnInput(raw){
+  raw=String(raw||'').trim();if(!raw)return null;
+  if(/^\d{1,12}$/.test(raw))return{id:raw};
+  const g=k=>(raw.match(new RegExp('[?&#;]'+k+'(?:=|%3D)(\\d{1,12})','i'))||[])[1]||'';
+  const id=g('leagueId');if(id)return{id,teamId:g('teamId'),season:g('seasonId')};
+  const m=raw.match(/https?:\/\/[^\s<>"']+/i)||(/^[\w.-]*(espn\.com|espn\.go\.com|es\.pn|espn\.app\.link)\//i.test(raw)?['https://'+raw]:null);
+  if(m)return{link:m[0]};
+  return {bad:true};
+}
+async function resolveEspnLink(link){
+  let r;try{r=await fetch(`${WORKER}/espnff/resolve`,{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',body:JSON.stringify({url:link})});}catch(e){throw new Error('Couldn\'t open that link right now. Check your connection, or type the League ID (the number after leagueId=).');}
+  const d=await r.json().catch(()=>({}));
+  if(!d.leagueId)throw new Error(d.error==='Only ESPN links can be opened'?'That doesn\'t look like an ESPN link. Paste the link from the ESPN Fantasy app, or just the league number.':'Couldn\'t find a league in that link. Try the link from ESPN Fantasy → your league → Share/Invite, or type the League ID.');
+  return{id:d.leagueId,teamId:d.teamId||'',season:d.seasonId||''};
+}
+const lmMessage=id=>`Hey! Could you make our ESPN fantasy league viewable to the public so I can follow it in my app? On fantasy.espn.com (website only, not the app): League → Settings → Basic Settings → Edit Basic Settings → set "Make League Viewable to Public" to Yes → Save Changes. It only lets people view the league with a link, nobody can join. Thanks!${id?`\nhttps://fantasy.espn.com/football/league?leagueId=${id}`:''}`;
+async function copyText(t){
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(t);return true;}}catch(e){}
+  try{const ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,t.length);const ok=document.execCommand('copy');ta.remove();return ok;}catch(e){return false;}
+}
 function openEspnAdd(existing){
-  const e=existing||{};
+  const e=existing||{};const canPaste=!!(navigator.clipboard&&navigator.clipboard.readText);
+  const seasonOv=e.season&&String(e.season)!==String(curSeason())?e.season:'';
   openSheet(shHead(existing?'Update ESPN league':'Add ESPN league')+`
-    <label for="fel">League ID (or paste the league's web address)</label><input id="fel" inputmode="numeric" autocomplete="off" placeholder="e.g. 899513" value="${esc(e.id||'')}">
-    <label for="fes">Season</label><input id="fes" inputmode="numeric" value="${esc(e.season||curSeason())}">
-    <div class="note">Find the League ID in the ESPN app under League → League Info, or in the league's web address after <b>leagueId=</b>.</div>
-    <label class="ff-chk"><input type="checkbox" id="fep" ${e.s2?'checked':''}> Private league (needs two ESPN cookies)</label>
-    <div id="fepx" style="${e.s2?'':'display:none'}">
+    <label for="fel">Paste your ESPN league link or ID</label>
+    <div class="ff-row"><input id="fel" autocomplete="off" autocapitalize="none" spellcheck="false" inputmode="url" placeholder="ESPN league link or League ID" value="${esc(e.id||'')}">${canPaste?`<button class="btn sec ff-paste" id="fepaste" type="button">📋 Paste</button>`:''}</div>
+    <div class="note">In the ESPN app: open your league → tap <b>Share/Invite</b> → <b>Copy Link</b>, then paste here.</div>
+    <div id="feerr"></div><button class="btn" id="fesave">${existing?'Save':'Add league'}</button>
+    <details class="ff-adv" id="feadv" ${e.s2?'open':''}><summary>Advanced (private league without making it public)</summary>
+      <label for="fes">Season</label><input id="fes" inputmode="numeric" maxlength="4" placeholder="${curSeason()} (current)" value="${esc(seasonOv)}">
       <div class="warnbox">🔒 <b>Treat these like a password.</b> espn_s2 and SWID let anyone who has them read your ESPN account. They're saved only on this phone and sent only to Sideline Status's secure relay to read this league. They're never stored on our server or shared. Signing out of ESPN on all devices makes them stop working.</div>
       <div class="note"><b>How to find them</b> (on a computer):<br>1. Sign in at fantasy.espn.com and open your league.<br>2. Open the browser's developer tools (Chrome: ⋮ → More tools → Developer tools → <b>Application</b> → Cookies; Safari/Firefox: <b>Storage</b> → Cookies).<br>3. Pick <b>https://fantasy.espn.com</b> and copy the values of <b>espn_s2</b> (a long string) and <b>SWID</b> (looks like {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}).<br>Public leagues don't need these.</div>
       <label for="fe2">espn_s2</label><input id="fe2" autocomplete="off" autocapitalize="none" spellcheck="false" value="${esc(e.s2||'')}">
       <label for="fesw">SWID</label><input id="fesw" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}" value="${esc(e.swid||'')}">
-    </div>
-    <div id="feerr"></div><button class="btn" id="fesave">${existing?'Save':'Add league'}</button>${existing?`<button class="btn danger" id="ferm">Remove this league</button>`:''}`);
+    </details>
+    ${existing?`<button class="btn danger" id="ferm">Remove this league</button>`:''}`);
   onClose(render);
-  $('fep').onchange=()=>{$('fepx').style.display=$('fep').checked?'':'none';};
-  $('fesave').onclick=async()=>{
-    const raw=$('fel').value.trim();const id=(raw.match(/leagueId=(\d+)/i)||raw.match(/^(\d{1,12})$/)||[])[1];
-    const season=($('fes').value.trim().match(/^20\d\d$/)||[])[0];
-    const priv=$('fep').checked;const s2=priv?$('fe2').value.trim().replace(/^espn_s2=/,''):'';const swid=priv?$('fesw').value.trim().replace(/^SWID=/,''):'';
-    const err=m=>{$('feerr').innerHTML=`<div class="errbox">${esc(m)}</div>`;$('fesave').disabled=false;};
-    if(!id)return err('Enter a numeric League ID.');if(!season)return err('Enter a season like 2026.');
-    if(priv&&(!s2||!/^\{?[0-9A-Fa-f-]{36}\}?$/.test(swid)))return err('Enter both espn_s2 and SWID (SWID looks like {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}).');
-    $('fesave').disabled=true;$('feerr').innerHTML='<div class="note">Checking with ESPN…</div>';
-    const entry={id,season,s2,swid,mine:e.id===id?e.mine:undefined};
+  const box=$('feerr');
+  const err=m=>{box.innerHTML=`<div class="errbox">${esc(m)}</div>`;$('fesave').disabled=false;};
+  const privCard=id=>{$('fesave').disabled=false;$('fesave').style.display='none';
+    box.innerHTML=`<div class="glass ff-priv" id="fepriv"><div class="ff-priv-h">🔒 This league is private</div>
+      <p>Ask your league manager to turn on: <b>League → Settings → Basic Settings → "Make League Viewable to Public"</b> (tap Edit Basic Settings, choose Yes, Save Changes). ESPN only shows this setting on the website, fantasy.espn.com. Then tap <b>Try again</b>.</p>
+      <button class="btn" id="fetry" type="button">↻ Try again</button><button class="btn sec" id="fecopy" type="button">💬 Copy message for my league manager</button>
+      <div class="note" style="margin-top:8px">It only makes the league viewable with a link. Nobody can join. Or use <b>Advanced</b> below.</div></div>`;
+    $('fetry').onclick=go;
+    $('fecopy').onclick=async()=>{const t=lmMessage(id);if(await copyText(t)){toast('Message copied. Paste it to your league manager.');$('fecopy').textContent='✓ Copied';}
+      else{$('fecopy').insertAdjacentHTML('afterend',`<textarea class="ff-msg" readonly>${esc(t)}</textarea>`);$('fecopy').remove();}};};
+  async function go(){
+    const raw=$('fel').value.trim();
+    let p=parseEspnInput(raw);if(!p)return err('Paste your ESPN league link or type the League ID.');
+    if(p.bad)return err('That doesn\'t look like an ESPN league link or ID. Paste the link from the ESPN app, or type the League ID (the number after leagueId=).');
+    $('fesave').disabled=true;box.innerHTML='<div class="note">Checking with ESPN…</div>';
+    try{if(p.link)p=await resolveEspnLink(p.link);}catch(x){return err(x.message);}
+    const ov=$('fes').value.trim();if(ov&&!/^20\d\d$/.test(ov))return err('Season should look like '+curSeason()+'.');
+    const season=ov||p.season||String(curSeason());const id=p.id;
+    let s2=$('fe2').value.trim().replace(/^espn_s2=/,'').replace(/;$/,'');let swid=$('fesw').value.trim().replace(/^SWID=/,'').replace(/;$/,'');
+    if((s2||swid)&&(!s2||!/^\{?[0-9A-Fa-f-]{36}\}?$/.test(swid)))return err('Under Advanced, enter both espn_s2 and SWID (SWID looks like {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}), or clear both.');
+    const entry={id,season,s2,swid,mine:p.teamId||(e.id===id?e.mine:undefined)};
     try{const d=espnParse(entry,await espnFetch(entry));entry.name=d.league.name;
       const list=espnLeagues().filter(x=>!(x.id===e.id&&String(x.season)===String(e.season))&&!(x.id===id&&String(x.season)===season));list.push(entry);LSs('ir_ff_espn',list);
-      F.data['espn/'+season+'-'+id]={t:Date.now(),d};closeSheet();toast('Added '+entry.name);location.hash='fantasy/espn/'+season+'-'+id;
-    }catch(x){err(x.priv&&!priv?'This league is private. Turn on "Private league" and add espn_s2 and SWID, or ask the commissioner to make the league viewable to the public.':x.message);}
-  };
+      F.data['espn/'+season+'-'+id]={t:Date.now(),d};closeSheet();
+      const mt=d.teams.find(t=>t.mine);toast('Added '+entry.name+(mt&&p.teamId?' · your team: '+mt.name:''));location.hash='fantasy/espn/'+season+'-'+id;
+    }catch(x){if(x.priv&&!s2)return privCard(id);err(x.message);}
+  }
+  $('fesave').onclick=go;$('fel').oninput=()=>{if($('fesave').style.display==='none'){$('fesave').style.display='';box.innerHTML='';}};$('fel').onkeydown=ev=>{if(ev.key==='Enter')go();};
+  if(canPaste)$('fepaste').onclick=async()=>{try{const t=(await navigator.clipboard.readText()||'').trim();if(!t)return toast('Clipboard is empty');$('fel').value=t;if(parseEspnInput(t)&&!parseEspnInput(t).bad)go();}catch(x){toast('Couldn\'t read the clipboard. Long-press the box and choose Paste.');$('fel').focus();}};
   if(existing)$('ferm').onclick=()=>{if(!confirm('Remove this ESPN league from Sideline Status?'))return;LSs('ir_ff_espn',espnLeagues().filter(x=>!(x.id===e.id&&String(x.season)===String(e.season))));closeSheet();location.hash='fantasy';};
 }
 
