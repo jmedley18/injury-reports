@@ -74,13 +74,13 @@ async function api(path,force){
   Y.loading[path]=(async()=>{
     const r=await fetch(`${API}/yahoo/api?path=${encodeURIComponent(path)}`,{headers:{Authorization:'Bearer '+Y.sid},cache:'no-store'});
     const txt=await r.text();let d=null;try{d=JSON.parse(txt);}catch(e){}
-    if(r.status===401&&d&&d.error==='reauth'){saveSid('');Y.cache={};Y.leagues=null;Y.notice='expired';Y.noticeT=0;throw new Reauth(d.detail||'expired');}
+    if(r.status===401&&d&&d.error==='reauth'){saveSid('');Y.cache={};Y.leagues=null;Y.notice=/^reconnect/.test(d.detail||'')?'reconnect':'expired';Y.noticeT=0;throw new Reauth(d.detail||'expired');}
     if(!r.ok||!d||d.error){const e=d&&d.error;throw new Error((e&&(e.description||(typeof e==='string'?e:'')))||('Yahoo HTTP '+r.status));}
     Y.cache[path]={t:Date.now(),d};return d;})();
   try{return await Y.loading[path];}finally{delete Y.loading[path];}
 }
 const P={
-  leagues:'users;use_login=1/games;game_keys=nfl,mlb,nba,nhl/leagues',
+  leagues:g=>`users;use_login=1/games;game_keys=${g}/leagues`, // one request per sport so an inactive game can't break the others
   standings:k=>`league/${k}/standings`,
   scoreboard:(k,w)=>`league/${k}/scoreboard${w?';week='+w:''}`,
   rosters:k=>`league/${k}/teams/roster`,
@@ -131,6 +131,7 @@ function noticeHtml(){ // shown for ~10s (the view re-renders several times whil
   if(Y.notice&&!Y.noticeT)Y.noticeT=Date.now();if(Y.notice&&Date.now()-Y.noticeT>10000){Y.notice='';Y.noticeT=0;}
   const n=Y.notice;if(!n)return'';if(n==='connected')return`<div class="y-ok">✅ Yahoo connected</div>`;
   if(n==='denied')return`<div class="warnbox" style="margin:0 0 12px">Yahoo sign-in was cancelled. Nothing was connected.</div>`;
+  if(n==='reconnect')return`<div class="warnbox" style="margin:0 0 12px">Please connect Yahoo again. The first connection didn't include Fantasy access. This is fixed now, so one more sign-in should do it.</div>`;
   if(n==='expired')return`<div class="warnbox" style="margin:0 0 12px">Your Yahoo connection expired or was revoked. Connect again to keep using the Fantasy tab.</div>`;
   return`<div class="errbox" style="margin:0 0 12px">Yahoo sign-in didn't finish (${esc(n.replace(/^error:/,''))}). Please try again.</div>`;}
 function errHtml(e){return e instanceof Reauth?'':`<div class="errbox" style="margin:0 0 12px">⚠️ Couldn't load from Yahoo (${esc(e.message)}). Tap ↻ to try again.</div>`;}
@@ -217,7 +218,13 @@ function openImport(l,t){
 }
 /* ---- data loading ---- */
 async function loadLeagues(force){
-  try{Y.leagues=parseLeagues(await api(P.leagues,force));Y.err=null;}catch(e){Y.err=e;if(!(e instanceof Reauth)&&!Y.leagues)Y.leagues=null;}
+  const res=await Promise.allSettled(['nfl','mlb','nba','nhl'].map(g=>api(P.leagues(g),force).then(parseLeagues)));
+  const bad=res.filter(r=>r.status==='rejected').map(r=>r.reason);
+  const re=bad.find(e=>e instanceof Reauth);if(re){Y.err=re;return;}
+  if(bad.length===res.length){Y.err=bad[0];return;}
+  const seen=new Set();Y.leagues=res.flatMap(r=>r.status==='fulfilled'?r.value:[]).filter(l=>!seen.has(l.key)&&seen.add(l.key))
+    .sort((a,b)=>(CODE_ORDER[a.code]??9)-(CODE_ORDER[b.code]??9)||a.name.localeCompare(b.name));
+  Y.err=null;
 }
 async function loadView(force){
   const {lk}=route();if(!lk)return;
