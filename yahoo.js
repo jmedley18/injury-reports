@@ -11,7 +11,7 @@ const yc=o=>{if(!o||typeof o!=='object')return[];if(Array.isArray(o))return o;co
 const ym=a=>{const r={};const w=x=>{if(Array.isArray(x))x.forEach(w);else if(x&&typeof x==='object')Object.assign(r,x);};w(a);return r;};
 const num=v=>{const n=parseFloat(v);return isFinite(n)?n:null;};
 const fc=j=>{if(!j||!j.fantasy_content){const e=j&&j.error;throw new Error(e?(e.description||String(e)):'Unexpected Yahoo response');}return j.fantasy_content;};
-const CODE_ORDER={nfl:0,mlb:1,nba:2,nhl:3};
+const CODE_ORDER={nfl:0,nba:1,mlb:2,nhl:3};
 function league(m){m=ym(m);return{key:m.league_key,id:String(m.league_id||''),name:m.name||'League',code:m.game_code||'',season:String(m.season||''),
   logo:m.logo_url||'',url:m.url||'',numTeams:+m.num_teams||0,scoring:m.scoring_type||'',draft:m.draft_status||'',
   week:+m.current_week||null,startWeek:+m.start_week||1,endWeek:+m.end_week||null,finished:!!+m.is_finished,startDate:m.start_date||'',endDate:m.end_date||''};}
@@ -58,7 +58,7 @@ if(typeof module!=='undefined'&&module.exports){module.exports=YParse;return;}
 
 /* ================= UI ================= */
 const API='https://injury-push.jmedley.workers.dev';
-const SPORT={nfl:'🏈 Football',mlb:'⚾ Baseball',nba:'🏀 Basketball',nhl:'🏒 Hockey'};
+const SPORT={nfl:'🏈 Football',nba:'🏀 Basketball',mlb:'⚾ Baseball',nhl:'🏒 Hockey'};
 const Y={sid:localStorage.getItem('ir_yahoo_sid')||'',leagues:null,cache:{},loading:{},err:null,notice:'',sub:localStorage.getItem('ir_y_sub')||'matchups',week:{},team:{},pollT:null};
 const saveSid=s=>{Y.sid=s||'';if(s)localStorage.setItem('ir_yahoo_sid',s);else localStorage.removeItem('ir_yahoo_sid');};
 // OAuth return: #yahoo?sid=... or #yahoo?error=...  (strip it from the URL right away)
@@ -150,7 +150,7 @@ function viewLeagues(){
   let h=hubBack()+noticeHtml();
   if(Y.err)h+=errHtml(Y.err);
   if(!Y.leagues)return h+(Y.err?`<button class="btn sec" id="ydisc">Disconnect Yahoo</button>`:`<div class="glass empty"><div class="spinner"></div>Loading your Yahoo leagues…</div>`);
-  if(!Y.leagues.length)h+=msgCard('🤷','No current-season leagues found','Your Yahoo account has no NFL, MLB, NBA or NHL leagues this season yet. Join or create one on Yahoo, then tap ↻.');
+  if(!Y.leagues.length)h+=msgCard('🤷','No current-season leagues found','Your Yahoo account has no NFL, NBA, MLB or NHL leagues this season yet. Join or create one on Yahoo, then tap ↻.');
   let last='';
   for(const l of Y.leagues){
     if(l.code!==last){h+=`<div class="section">${SPORT[l.code]||esc(l.gameName||l.code)}</div>`;last=l.code;}
@@ -204,7 +204,7 @@ function viewRosters(l,d){
       const e=espnFor(p,l.code);const note=[p.injury,isInj(e)?[e.type,e.det].filter(x=>x&&!/not specified/i.test(x)).join(' '):''].filter(Boolean)[0]||'';
       return `<div class="y-pr"><span class="y-slot ${g}">${esc(p.slot||'–')}</span>${p.img?`<img class="y-hs" src="${esc(p.img)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`:''}<div class="y-pb"><b>${esc(p.name)}</b><small>${esc(p.team||'FA')} · ${esc(p.pos)}${p.bye&&l.code==='nfl'?` · Bye ${esc(p.bye)}`:''}${note?` · <span class="y-inj">${esc(note)}</span>`:''}</small></div><div class="y-sts">${statusBadges(p,l.code)}</div></div>`;}).join('')+`</div>`;
   }
-  if(!LEAGUES[l.code])h+=`<div class="note">ESPN injury overlay and My Players import cover NFL, MLB and NBA. Yahoo's own status is shown for ${esc(l.code.toUpperCase())}.</div>`;
+  if(!LEAGUES[l.code])h+=`<div class="note">ESPN injury overlay and My Players import cover NFL, NBA and MLB. Yahoo's own status is shown for ${esc(l.code.toUpperCase())}.</div>`;
   return h;
 }
 function openImport(l,t){
@@ -220,7 +220,7 @@ function openImport(l,t){
 }
 /* ---- data loading ---- */
 async function loadLeagues(force){
-  const res=await Promise.allSettled(['nfl','mlb','nba','nhl'].map(g=>api(P.leagues(g),force).then(parseLeagues)));
+  const res=await Promise.allSettled(['nfl','nba','mlb','nhl'].map(g=>api(P.leagues(g),force).then(parseLeagues)));
   const bad=res.filter(r=>r.status==='rejected').map(r=>r.reason);
   const re=bad.find(e=>e instanceof Reauth);if(re){Y.err=re;return;}
   if(bad.length===res.length){Y.err=bad[0];return;}

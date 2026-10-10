@@ -39,6 +39,6 @@ AdSense units sit in the banner position above the content. They are never rotat
 
 `yahoo.js` / `yahoo.css` add the **Fantasy** tab. Yahoo OAuth and the API proxy run in the `injury-push` Worker (`/yahoo/login`, `/yahoo/callback`, `/yahoo/api`, `/yahoo/logout`, `/yahoo/claim`). The app only keeps a random session id in localStorage (`ir_yahoo_sid`) and sends it as `Authorization: Bearer`. Yahoo data is fetched live and is never cached by the service worker.
 
-- Views: leagues (NFL first, then MLB/NBA/NHL) → Matchups (week selector, actual + projected points, win probability), Standings, Rosters (starters/bench/IR, Yahoo status + ESPN injury overlay), Import to My Players (NFL/MLB/NBA).
+- Views: leagues (NFL first, then NBA/MLB/NHL) → Matchups (week selector, actual + projected points, win probability), Standings, Rosters (starters/bench/IR, Yahoo status + ESPN injury overlay), Import to My Players (NFL/MLB/NBA).
 - iPhone Home Screen app: sign-in opens in a Safari sheet with separate storage, so the app polls `/yahoo/claim` with a one-time pairing code to pick up the session.
 - Tests: `node tools/test_yahoo.cjs` (parsers against Yahoo-shaped fixtures from `node tools/yahoo_fixtures.mjs`; fixture data is fake).

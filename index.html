@@ -240,8 +240,8 @@
 const $=id=>document.getElementById(id);
 const LEAGUES={
   nfl:{label:'NFL',path:'football/nfl'},
-  mlb:{label:'MLB',path:'baseball/mlb'},
-  nba:{label:'NBA',path:'basketball/nba'}
+  nba:{label:'NBA',path:'basketball/nba'},
+  mlb:{label:'MLB',path:'baseball/mlb'}
 };
 const HOSTS=['https://site.web.api.espn.com','https://site.api.espn.com'];
 const SEARCH='https://site.web.api.espn.com/apis/common/v3/search';
@@ -418,10 +418,11 @@ window.addEventListener('hashchange',()=>{const pl=state.league;parseHash();if(p
 function myCounts(){const r=roster();if(!r)return{inj:0,all:0};let inj=0;for(const p of r.players)if(isInj(findEntry(p)))inj++;return{inj,all:r.players.length};}
 function renderTabs(){
   const c=myCounts();
-  $('tabs').innerHTML=`<button class="tab ${state.league==='mine'?'on':''}" data-lg="mine">${news.length?'<span class="dot"></span>':''}★ Mine${c.inj?`<span class="tb">${c.inj}</span>`:''}</button>`+
+  /* order: NFL, NBA, MLB, Scores, Fantasy, ★ Mine */
+  $('tabs').innerHTML=Object.entries(LEAGUES).map(([k,v])=>`<button class="tab ${k===state.league?'on':''}" data-lg="${k}">${v.label}</button>`).join('')+
     `<button class="tab ${state.league==='scores'?'on':''}" data-lg="scores">Scores</button>`+ /* scores */
     `<button class="tab ${state.league==='yahoo'||state.league==='fantasy'?'on':''}" data-lg="fantasy">Fantasy</button>`+ /* fantasy hub (Yahoo lives under it) */
-    Object.entries(LEAGUES).map(([k,v])=>`<button class="tab ${k===state.league?'on':''}" data-lg="${k}">${v.label}</button>`).join('');
+    `<button class="tab ${state.league==='mine'?'on':''}" data-lg="mine">${news.length?'<span class="dot"></span>':''}★ Mine${c.inj?`<span class="tb">${c.inj}</span>`:''}</button>`;
   $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{location.hash=b.dataset.lg;});
 }
 function renderMeta(){
@@ -608,11 +609,11 @@ function resultRow(x,i,added){const t=teamByAbbr(x.lg,x.team);
   <div class="rb">${esc(x.n)}<small>${t?`<img class="tlogo" src="${esc(t.logo)}" alt="">`:''}${esc(x.pos)} · ${esc(x.teamName||x.team||'Free agent')} <span class="lgc">${LEAGUES[x.lg].label}</span></small></div>
   <button class="add ${added?'done':''}" data-i="${i}">${added?'✓':'＋'}</button></div>`;}
 function openSearch(){
-  openSheet(shHead('Add players')+`<input id="ps" type="search" placeholder="Player name (NFL, MLB, NBA)" autocomplete="off" enterkeyhint="search"><div id="psr"><div class="note">Start typing a name, e.g. "Mahomes" or "Judge".</div></div>`);
+  openSheet(shHead('Add players')+`<input id="ps" type="search" placeholder="Player name (NFL, NBA, MLB)" autocomplete="off" enterkeyhint="search"><div id="psr"><div class="note">Start typing a name, e.g. "Mahomes" or "Judge".</div></div>`);
   onClose(render);
   let ctl,timer,res=[];
   const inRoster=x=>{const r=roster();return !!r&&r.players.some(p=>p.k===pkey(x.lg,x.id,x.n,x.team));};
-  const draw=()=>{$('psr').innerHTML=res.length?res.map((x,i)=>resultRow(x,i,inRoster(x))).join(''):'<div class="note">No active NFL, MLB or NBA players found.</div>';
+  const draw=()=>{$('psr').innerHTML=res.length?res.map((x,i)=>resultRow(x,i,inRoster(x))).join(''):'<div class="note">No active NFL, NBA or MLB players found.</div>';
     $('psr').querySelectorAll('.add').forEach(b=>b.onclick=()=>{const x=res[+b.dataset.i];if(inRoster(x)){const r=roster();r.players=r.players.filter(p=>p.k!==pkey(x.lg,x.id,x.n,x.team));saveRosters();}else{addPlayers([x]);toast(`Added ${x.n}`);}draw();});};
   $('ps').oninput=()=>{clearTimeout(timer);const q=$('ps').value.trim();if(q.length<2){$('psr').innerHTML='';return;}
     timer=setTimeout(async()=>{ctl&&ctl.abort();ctl=new AbortController();$('psr').innerHTML='<div class="note">Searching…</div>';

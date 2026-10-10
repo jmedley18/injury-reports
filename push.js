@@ -7,7 +7,7 @@ const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigat
 const b64uToBytes=s=>{const b=atob((s+'='.repeat((4-s.length%4)%4)).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0));};
 const pushOn=()=>LS.get('ir_push',false);
 
-// What the user follows = starred teams + every player in every saved list (NFL/MLB/NBA only)
+// What the user follows = starred teams + every player in every saved list (NFL/NBA/MLB only)
 function currentFollows(){
   const teams=favs.map(k=>{const [league,teamId]=k.split(':');return{league,teamId};}).filter(t=>LEAGUES[t.league]&&t.teamId);
   const seen=new Set(),players=[];
