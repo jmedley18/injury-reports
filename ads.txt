@@ -1,3 +1,1 @@
-# ads.txt for medleyfinds.com
-# Placeholder: the Google AdSense line will be added here once the publisher ID is known, in the form:
-# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+google.com, pub-1050159149162190, DIRECT, f08c47fec0942fa0

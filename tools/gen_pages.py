@@ -12,6 +12,7 @@ def page(fn,title,desc,body):
 <title>{html.escape(title)} · Injury Reports</title>
 <meta name="description" content="{html.escape(desc)}">
 <link rel="canonical" href="{BASE}{fn}">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1050159149162190" crossorigin="anonymous"></script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Injury Reports">
 <meta property="og:title" content="{html.escape(title)} · Injury Reports">

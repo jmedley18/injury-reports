@@ -1,6 +1,6 @@
 /* Ad banner slot (#adSlot): rotating sportsbook referral banner + optional Google AdSense unit. Self-contained. */
 /* ===== AdSense config: fill these in after AdSense approval. While ADSENSE_CLIENT is '', nothing from Google loads. ===== */
-const ADSENSE_CLIENT='';   // your publisher ID, e.g. 'ca-pub-1234567890123456' (placeholder: ca-pub-XXXXXXXXXXXXXXXX)
+const ADSENSE_CLIENT='ca-pub-1050159149162190'; // your publisher ID, e.g. 'ca-pub-1234567890123456' (placeholder: ca-pub-XXXXXXXXXXXXXXXX)
 const ADSENSE_SLOT='';     // display ad unit ID (data-ad-slot) from AdSense > Ads > By ad unit. Empty = load the script only (Auto ads)
 const ADSENSE_MODE='alternate'; // 'replace'   = AdSense unit only, sportsbook banner never shows
                                 // 'alternate' = each app open randomly shows EITHER the AdSense unit OR the sportsbook banner
@@ -29,6 +29,7 @@ const ADSENSE_ON=/^ca-pub-\d{10,}$/.test(ADSENSE_CLIENT);
 let adsenseLoaded=false;
 function loadAdsense(){
   if(!ADSENSE_ON||adsenseLoaded)return;adsenseLoaded=true;
+  if(document.querySelector('script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]'))return; // already in <head> statically
   const sc=document.createElement('script');sc.async=true;sc.crossOrigin='anonymous';
   sc.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client='+encodeURIComponent(ADSENSE_CLIENT);
   document.head.appendChild(sc);
