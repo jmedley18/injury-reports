@@ -42,3 +42,9 @@ AdSense units sit in the banner position above the content. They are never rotat
 - Views: leagues (NFL first, then NBA/MLB/NHL) → Matchups (week selector, actual + projected points, win probability), Standings, Rosters (starters/bench/IR, Yahoo status + ESPN injury overlay), Import to My Players (NFL/MLB/NBA).
 - iPhone Home Screen app: sign-in opens in a Safari sheet with separate storage, so the app polls `/yahoo/claim` with a one-time pairing code to pick up the session.
 - Tests: `node tools/test_yahoo.cjs` (parsers against Yahoo-shaped fixtures from `node tools/yahoo_fixtures.mjs`; fixture data is fake).
+
+## Analytics (cookieless)
+
+`analytics.js` is loaded on every page.
+- **Cloudflare Web Analytics** (visits and page views) turns on once `CF_BEACON_TOKEN` in `analytics.js` is set to the site token from the Cloudflare dashboard.
+- **Anonymous feature counts** (app opens, tab views, Watch taps and links, sportsbook ad clicks by brand, push enables, fantasy connects by provider) are batched and sent with `sendBeacon` to the Worker's `POST /e`. The Worker accepts only allowlisted keys from our origins and stores daily totals in a SQLite Durable Object, so there are no KV writes. View them at the Worker's `GET /stats?key=…` (the key is in `injury-push/.secrets/stats_key`).

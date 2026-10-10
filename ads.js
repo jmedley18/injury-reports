@@ -57,6 +57,7 @@ function mount(){
     <span class="ad-tag">Ad</span><button class="ad-x" aria-label="Hide ad for this session">✕</button>
     <div class="ad-fine">${esc(FINE)}</div><div class="ad-dots">${ADS.map(()=>'<i></i>').join('')}</div></div>`;
   const el=slot.firstChild;paint(el,ADS[i]);
+  el.querySelector('.ad-link').addEventListener('click',e=>{const id=e.currentTarget.dataset.ad;if(id&&window.IRTrack)IRTrack('ad:'+id);});
   el.querySelector('.ad-x').onclick=()=>{sessionStorage.setItem(KEY,'1');clearInterval(timer);slot.innerHTML='';};
   clearInterval(timer);
   timer=setInterval(()=>{

@@ -202,7 +202,7 @@ async function addSleeper(){
   $('fsladd').disabled=true;
   try{const x=await sj('/user/'+encodeURIComponent(u));if(!x||!x.user_id)throw new Error(`No Sleeper user "${u}"`);
     const list=sleeperUsers().filter(v=>v.id!==x.user_id);list.push({id:x.user_id,name:x.display_name||x.username||u});LSs('ir_ff_sleeper',list);
-    localStorage.setItem('ir_sleeper_user',u);F.hub=null;F.hubErr=null;toast('Added @'+(x.display_name||u));draw();refresh(true);
+    localStorage.setItem('ir_sleeper_user',u);F.hub=null;F.hubErr=null;toast('Added @'+(x.display_name||u));if(window.IRTrack)IRTrack('ff:sleeper');draw();refresh(true);
   }catch(e){toast(e.message);$('fsladd').disabled=false;}
 }
 /* ESPN add: one field (link or ID). Public fetch first; private leagues get a friendly "ask your LM" card.
@@ -268,7 +268,7 @@ function openEspnAdd(existing){
     try{const d=espnParse(entry,await espnFetch(entry));entry.name=d.league.name;
       const list=espnLeagues().filter(x=>!(x.id===e.id&&String(x.season)===String(e.season))&&!(x.id===id&&String(x.season)===season));list.push(entry);LSs('ir_ff_espn',list);
       F.data['espn/'+season+'-'+id]={t:Date.now(),d};closeSheet();
-      const mt=d.teams.find(t=>t.mine);toast('Added '+entry.name+(mt&&p.teamId?' · your team: '+mt.name:''));location.hash='fantasy/espn/'+season+'-'+id;
+      if(window.IRTrack)IRTrack('ff:espn');const mt=d.teams.find(t=>t.mine);toast('Added '+entry.name+(mt&&p.teamId?' · your team: '+mt.name:''));location.hash='fantasy/espn/'+season+'-'+id;
     }catch(x){if(x.priv&&!s2)return privCard(id);err(x.message);}
   }
   $('fesave').onclick=go;$('fel').oninput=()=>{if($('fesave').style.display==='none'){$('fesave').style.display='';box.innerHTML='';}};$('fel').onkeydown=ev=>{if(ev.key==='Enter')go();};

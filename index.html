@@ -15,6 +15,7 @@
   addEventListener('pagehide',done);document.addEventListener('visibilitychange',function(){if(document.hidden)done();else ls.setItem('ir_booting','1'),setTimeout(done,8000);});
   window.IR_BOOT_OK=function(){setTimeout(done,8000);};
 }catch(e){}})();</script>
+<script src="analytics.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -430,7 +431,8 @@ function parseHash(){const [lg,id]=location.hash.slice(1).split('/');
   if(lg==='mine'||lg==='scores'||lg==='yahoo'||lg==='fantasy'){state.league=lg;state.team=null;}
   else if(LEAGUES[lg]){state.league=lg;state.team=id||null;}else{state.team=null;}
   localStorage.setItem('ir_league',state.league);}
-window.addEventListener('hashchange',()=>{const pl=state.league;parseHash();if(pl!==state.league)state.q='';state.showCleared=false;closeSheet();render();refreshAll(false);window.scrollTo(0,0);});
+const trk=k=>{try{window.IRTrack&&IRTrack(k);}catch(e){}};
+window.addEventListener('hashchange',()=>{const pl=state.league;parseHash();if(pl!==state.league){state.q='';trk('tab:'+state.league);}state.showCleared=false;closeSheet();render();refreshAll(false);window.scrollTo(0,0);});
 
 /* ---------- rendering ---------- */
 function myCounts(){const r=roster();if(!r)return{inj:0,all:0};let inj=0;for(const p of r.players)if(isInj(findEntry(p)))inj++;return{inj,all:r.players.length};}
@@ -827,6 +829,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshAll
   for(const l of neededLeagues()){const c=LS.get('ir_cache_'+l,null);if(c&&!DATA[l]){c.offline=true;DATA[l]=index(c);}}
   render();
   if(window.IR_BOOT_OK)IR_BOOT_OK();
+  trk('open');trk('tab:'+state.league);if(window.IR_SAFE)trk('safe_mode');
   setTimeout(()=>refreshAll(true),window.IR_SAFE?1500:50);
 })();
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(()=>syncPush(false)).catch(()=>{}));

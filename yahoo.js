@@ -60,7 +60,7 @@ if(typeof module!=='undefined'&&module.exports){module.exports=YParse;return;}
 const API='https://injury-push.jmedley.workers.dev';
 const SPORT={nfl:'🏈 Football',nba:'🏀 Basketball',mlb:'⚾ Baseball',nhl:'🏒 Hockey'};
 const Y={sid:localStorage.getItem('ir_yahoo_sid')||'',leagues:null,cache:{},loading:{},err:null,notice:'',sub:localStorage.getItem('ir_y_sub')||'matchups',week:{},team:{},pollT:null};
-const saveSid=s=>{Y.sid=s||'';if(s)localStorage.setItem('ir_yahoo_sid',s);else localStorage.removeItem('ir_yahoo_sid');};
+const saveSid=s=>{if(s&&s!==Y.sid&&window.IRTrack)IRTrack('ff:yahoo');Y.sid=s||'';if(s)localStorage.setItem('ir_yahoo_sid',s);else localStorage.removeItem('ir_yahoo_sid');};
 // OAuth return: #yahoo?sid=... or #yahoo?error=...  (strip it from the URL right away)
 (function(){const m=location.hash.match(/^#yahoo\?(.*)$/);if(!m)return;const q=new URLSearchParams(m[1]);
   if(q.get('sid')){saveSid(q.get('sid'));localStorage.removeItem('ir_yahoo_pair');Y.notice='connected';}

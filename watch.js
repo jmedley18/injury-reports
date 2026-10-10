@@ -93,7 +93,8 @@ function open(g){
       (o.prov?a('Open '+o.prov.name,o.prov.url,'prov'):'')+o.links.map(l=>a(l.label,l.url)).join('')+`</div></div>`;
   }
   h+=`<div class="note">${p&&p!=='none'&&p!=='other'?`Your TV provider: <b>${esc(PROVIDERS[p].name)}</b>. Channels depend on your package and area, and most network apps ask you to sign in with your TV provider or a subscription.`:'Most network apps ask you to sign in with a TV provider or a subscription.'} <a href="#" id="wset">Change TV provider</a></div>`;
-  openSheet(h);
+  openSheet(h);if(window.IRTrack)IRTrack('watch');
+  $('shc').querySelectorAll('a.w-btn').forEach(x=>x.addEventListener('click',()=>{if(window.IRTrack)IRTrack('watch_link:'+IRTrackSlug(x.textContent.replace('↗','')));}));
   const s=$('wset');if(s)s.onclick=e=>{e.preventDefault();openSettings(false,()=>open(g));};
 }
 function openSettings(first,after){

@@ -31,7 +31,7 @@ async function enablePush(){
   let sub=await reg.pushManager.getSubscription();
   if(!sub){const {publicKey}=await (await fetch(PUSH_API+'/vapid-public-key')).json();
     sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uToBytes(publicKey)});}
-  LS.set('ir_push',true);
+  LS.set('ir_push',true);if(window.IRTrack)IRTrack('push_on');
   await syncPush(true);
   postPush('/test',{endpoint:sub.endpoint}).catch(()=>{}); // confirmation push proves the whole path works
   return true;

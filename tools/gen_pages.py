@@ -1,6 +1,6 @@
 import html
 BASE='https://medleyfinds.com/'
-EFF='October 9, 2026'
+EFF='October 10, 2026'
 NAV=[('index.html','Open the app'),('about.html','About'),('privacy.html','Privacy Policy'),('terms.html','Terms of Use'),('contact.html','Contact')]
 def page(fn,title,desc,body):
     nav=' '.join(f'<a href="{h}"{" aria-current=\"page\"" if h==fn else ""}>{t}</a>' for h,t in NAV)
@@ -13,6 +13,7 @@ def page(fn,title,desc,body):
 <meta name="description" content="{html.escape(desc)}">
 <link rel="canonical" href="{BASE}{fn}">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1050159149162190" crossorigin="anonymous"></script>
+<script src="analytics.js" defer></script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Sideline Status">
 <meta property="og:title" content="{html.escape(title)} · Sideline Status">
@@ -57,7 +58,7 @@ pages['about.html']=('About','About Sideline Status: a free phone web app with l
 <h2>Contact</h2>
 <p>Questions or feedback? See the <a href="contact.html">Contact page</a>.</p>
 ''')
-pages['privacy.html']=('Privacy Policy','Privacy Policy for the Sideline Status app: what is stored on your device, push alert data, advertising cookies including Google AdSense, and referral links.',f'''
+pages['privacy.html']=('Privacy Policy','Privacy Policy for the Sideline Status app: what is stored on your device, push alert data, advertising cookies including Google AdSense, cookieless analytics, and referral links.',f'''
 <h1>Privacy Policy</h1>
 <p class="eff">Effective date: {EFF}</p>
 <p>This policy explains what information the Sideline Status web app ("the app", "we") uses and stores. The short version: there are no accounts, we don't ask for your name or email to use the app, and most of your data never leaves your device.</p>
@@ -74,7 +75,11 @@ pages['privacy.html']=('Privacy Policy','Privacy Policy for the Sideline Status 
 <li><b>Sportsbook referral links.</b> The app shows referral links for sportsbooks (Fanatics Sportsbook, DraftKings Sportsbook and FanDuel Sportsbook). The app's operator may receive a referral benefit if you sign up through these links. Clicking a link takes you to that company's website or app, where its own privacy policy and terms apply. We don't share your information with these companies. The link itself identifies the referrer.</li>
 </ul>
 <h2>Analytics</h2>
-<p>We don't use analytics or tracking scripts beyond the advertising described above.</p>
+<p>We use privacy-friendly, cookieless analytics to understand how the app is used:</p>
+<ul>
+<li><b>Cloudflare Web Analytics.</b> It counts visits and page views (for example, which pages are viewed, the referring site, and browser and device type) without cookies, local storage or fingerprinting, and doesn't track you across websites. See Cloudflare's privacy policy.</li>
+<li><b>Anonymous feature counts.</b> The app sends simple totals to our server, such as "app opened", "NFL tab viewed", "Watch tapped", "sportsbook ad tapped (brand)", "push alerts turned on" or "fantasy league connected (Sleeper/ESPN/Yahoo)". These counts carry no user ID, name, league, team, player or cookie, and we don't store IP addresses with them. They're kept as daily totals.</li>
+</ul>
 <h2>Hosting</h2>
 <p>The app is hosted on GitHub Pages. GitHub may collect standard technical information (such as IP addresses) in server logs for security and operations, under GitHub's privacy statement.</p>
 <h2>Children</h2>
