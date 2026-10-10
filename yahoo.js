@@ -134,7 +134,7 @@ function noticeHtml(){ // shown for ~10s (the view re-renders several times whil
   if(n==='reconnect')return`<div class="warnbox" style="margin:0 0 12px">Please connect Yahoo again. The first connection didn't include Fantasy access. This is fixed now, so one more sign-in should do it.</div>`;
   if(n==='expired')return`<div class="warnbox" style="margin:0 0 12px">Your Yahoo connection expired or was revoked. Connect again to keep using the Fantasy tab.</div>`;
   return`<div class="errbox" style="margin:0 0 12px">Yahoo sign-in didn't finish (${esc(n.replace(/^error:/,''))}). Please try again.</div>`;}
-function errHtml(e){if(/not authorized to perform/i.test(e&&e.message||''))return`<div class="warnbox" style="margin:0 0 12px"><b>Yahoo hasn't switched on Fantasy data for this app yet.</b> You're signed in, but Yahoo now has to approve each app before it can read fantasy leagues. Sideline Status has applied, and this tab will start working on its own once Yahoo approves it.</div>`;
+function errHtml(e){if(/not authorized to perform/i.test(e&&e.message||''))return`<div class="warnbox" style="margin:0 0 12px"><b>Yahoo hasn't switched on Fantasy data for this app yet.</b> You're signed in, but Yahoo now has to approve each app before it can read fantasy leagues. This tab will start working on its own once Yahoo approves the Sideline Status app.</div>`;
   return e instanceof Reauth?'':`<div class="errbox" style="margin:0 0 12px">⚠️ Couldn't load from Yahoo (${esc(e.message)}). Tap ↻ to try again.</div>`;}
 
 /* ---- views ---- */
