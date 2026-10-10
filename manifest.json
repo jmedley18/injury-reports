@@ -1,6 +1,6 @@
 {
   "name": "Sideline Status",
-  "short_name": "Sideline",
+  "short_name": "Sideline Status",
   "description": "Live NFL, MLB and NBA injury reports for any team, plus your fantasy players.",
   "start_url": "./",
   "scope": "./",
