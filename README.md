@@ -1,4 +1,4 @@
-# Injury Reports
+# Sideline Status
 
 A phone-friendly web app (installable PWA) for live NFL, MLB and NBA injury reports, plus a personal "My Players" fantasy watch list.
 

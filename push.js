@@ -69,7 +69,7 @@ async function renderPushPanel(){
   const hint=`<div class="note" style="width:100%;margin-top:6px">Get notified when your starred teams or My Players have an injury update, even when the app is closed. "What's new" also shows changes here in the app.</div>`;
   if(!pushSupported()){
     el.innerHTML=isIOS&&!isStandalone()
-      ?`📲<div><b>Want push alerts?</b><br><span style="opacity:.75">On iPhone, tap <b>Share</b> → <b>Add to Home Screen</b>, then open Injury Reports from your Home Screen and turn alerts on there.</span></div>`
+      ?`📲<div><b>Want push alerts?</b><br><span style="opacity:.75">On iPhone, tap <b>Share</b> → <b>Add to Home Screen</b>, then open Sideline Status from your Home Screen and turn alerts on there.</span></div>`
       :`🔔<div>Changes show in "What's new" here. <span style="opacity:.65">This browser doesn't support push alerts.</span></div>`;
     return;
   }
