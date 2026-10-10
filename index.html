@@ -29,6 +29,7 @@
 <link rel="stylesheet" href="scores.css"><!-- scores -->
 <link rel="stylesheet" href="ads.css"><!-- ads -->
 <link rel="stylesheet" href="yahoo.css"><!-- yahoo -->
+<link rel="stylesheet" href="fantasy.css"><!-- fantasy -->
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html{background:#050b1f}
@@ -234,6 +235,7 @@
 <script src="scores.js"></script><!-- scores -->
 <script src="push.js"></script><!-- push -->
 <script src="yahoo.js"></script><!-- yahoo -->
+<script src="fantasy.js"></script><!-- fantasy: Sleeper + ESPN + hub -->
 <script>
 const $=id=>document.getElementById(id);
 const LEAGUES={
@@ -251,7 +253,7 @@ let TEAMS=null; const DATA={}; const LOADING={};
 /* ---------- one-time cleanup from v1 (college football removed) ---------- */
 try{localStorage.removeItem('ir_cache_ncaaf');}catch(e){}
 let favs=LS.get('ir_favs',[]).filter(k=>LEAGUES[k.split(':')[0]]);LS.set('ir_favs',favs);
-let lastView=localStorage.getItem('ir_league');if(lastView!=='mine'&&lastView!=='scores'&&lastView!=='yahoo'&&!LEAGUES[lastView])lastView='nfl';
+let lastView=localStorage.getItem('ir_league');if(lastView!=='mine'&&lastView!=='scores'&&lastView!=='yahoo'&&lastView!=='fantasy'&&!LEAGUES[lastView])lastView='nfl';
 let state={league:lastView,team:null,q:'',showCleared:false};
 
 /* ---------- My Players storage ---------- */
@@ -407,7 +409,7 @@ function notify(items){
 
 /* ---------- routing ---------- */
 function parseHash(){const [lg,id]=location.hash.slice(1).split('/');
-  if(lg==='mine'||lg==='scores'||lg==='yahoo'){state.league=lg;state.team=null;}
+  if(lg==='mine'||lg==='scores'||lg==='yahoo'||lg==='fantasy'){state.league=lg;state.team=null;}
   else if(LEAGUES[lg]){state.league=lg;state.team=id||null;}else{state.team=null;}
   localStorage.setItem('ir_league',state.league);}
 window.addEventListener('hashchange',()=>{const pl=state.league;parseHash();if(pl!==state.league)state.q='';state.showCleared=false;closeSheet();render();refreshAll(false);window.scrollTo(0,0);});
@@ -418,13 +420,14 @@ function renderTabs(){
   const c=myCounts();
   $('tabs').innerHTML=`<button class="tab ${state.league==='mine'?'on':''}" data-lg="mine">${news.length?'<span class="dot"></span>':''}★ Mine${c.inj?`<span class="tb">${c.inj}</span>`:''}</button>`+
     `<button class="tab ${state.league==='scores'?'on':''}" data-lg="scores">Scores</button>`+ /* scores */
-    `<button class="tab ${state.league==='yahoo'?'on':''}" data-lg="yahoo">Fantasy</button>`+ /* yahoo */
+    `<button class="tab ${state.league==='yahoo'||state.league==='fantasy'?'on':''}" data-lg="fantasy">Fantasy</button>`+ /* fantasy hub (Yahoo lives under it) */
     Object.entries(LEAGUES).map(([k,v])=>`<button class="tab ${k===state.league?'on':''}" data-lg="${k}">${v.label}</button>`).join('');
   $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{location.hash=b.dataset.lg;});
 }
 function renderMeta(){
   if(state.league==='scores')return Scores.renderMeta(); /* scores */
   if(state.league==='yahoo')return Yahoo.renderMeta(); /* yahoo */
+  if(state.league==='fantasy')return Fantasy.renderMeta(); /* fantasy */
   if(state.league==='mine'){
     const ds=Object.keys(LEAGUES).map(l=>DATA[l]).filter(Boolean);
     $('season').textContent='My Players';$('season').className='pill';
@@ -656,12 +659,12 @@ let SLEEPER_DB=null;
 async function sleeperDB(status){
   if(SLEEPER_DB)return SLEEPER_DB;
   const c=LS.get('ir_sleeper_db',null);
-  if(c&&Date.now()-c.t<864e5){SLEEPER_DB=c.p;return SLEEPER_DB;}
+  if(c&&c.v===2&&Date.now()-c.t<864e5){SLEEPER_DB=c.p;return SLEEPER_DB;}
   status&&status('Downloading the Sleeper player list (about 2.5 MB, once a day)…');
   try{
     const all=await sj('/players/nfl');const p={};
-    for(const [id,x] of Object.entries(all))if(x.active||x.team)p[id]=[x.full_name||((x.first_name||'')+' '+(x.last_name||'')).trim(),x.team||'',x.position||'',x.espn_id?String(x.espn_id):''];
-    LS.set('ir_sleeper_db',{t:Date.now(),p});SLEEPER_DB=p;return p;
+    for(const [id,x] of Object.entries(all))if(x.active||x.team){p[id]=[x.full_name||((x.first_name||'')+' '+(x.last_name||'')).trim(),x.team||'',x.position||'',x.espn_id?String(x.espn_id):''];if(x.injury_status)p[id].push(x.injury_status,x.injury_body_part||'');}
+    LS.set('ir_sleeper_db',{v:2,t:Date.now(),p});SLEEPER_DB=p;return p;
   }catch(e){if(c){SLEEPER_DB=c.p;return c.p;}throw e;}
 }
 function openSleeper(){
@@ -729,15 +732,17 @@ function render(){
   renderTabs();renderMeta();
   if(state.league==='scores')Scores.render(); /* scores */
   else if(state.league==='yahoo')Yahoo.render(); /* yahoo */
+  else if(state.league==='fantasy')Fantasy.render(); /* fantasy */
   else if(state.league==='mine')renderMine();else if(state.team)renderTeam();else renderList();
 }
 
 async function refreshAll(force){
   $('refresh').classList.add('spin');
   // load the current view's league first, then the rest (needed for My Players + starred teams + change alerts)
-  const first=(state.league==='mine'||state.league==='scores'||state.league==='yahoo')?null:state.league;
+  const first=(state.league==='mine'||state.league==='scores'||state.league==='yahoo'||state.league==='fantasy')?null:state.league;
   if(state.league==='scores')Scores.refresh(force); /* scores */
   if(state.league==='yahoo'&&force)Yahoo.refresh(true); /* yahoo */
+  if(state.league==='fantasy'&&force)Fantasy.refresh(true); /* fantasy */
   let err=null;
   try{
     if(first){try{await load(first,force);}catch(e){err=e;}if(!$('sheet').classList.contains('hidden'))renderTabs();else render();}

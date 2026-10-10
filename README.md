@@ -27,6 +27,13 @@ AdSense units sit in the banner position above the content. They are never rotat
 `ads.txt` is at the repo root, so it's served at `https://medleyfinds.com/ads.txt`. It's a comment-only placeholder for now. Once the AdSense publisher ID is known, add:
 `google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0`
 
+## Sleeper & ESPN Fantasy
+
+`fantasy.js` / `fantasy.css` turn the **Fantasy** tab into a hub (`#fantasy`) with three providers: Sleeper, ESPN and Yahoo (`#yahoo`, unchanged).
+- **Sleeper** (`#fantasy/sl/<leagueId>`): public keyless API. Username → user_id → 2026 NFL leagues. Standings come from the roster settings; matchups come from `/matchups/{week}`; players come from the cached slim player DB (`ir_sleeper_db` v2, which includes Sleeper injury status). Usernames are saved in `ir_ff_sleeper`.
+- **ESPN** (`#fantasy/espn/<season>-<leagueId>`): public leagues are read straight from `lm-api-reads.fantasy.espn.com` (CORS allows this origin). Private leagues send the user's `espn_s2` and `SWID` to the Worker's read-only `POST /espnff` relay, which forwards them as cookies and stores or logs nothing. The cookies stay only in this device's localStorage (`ir_ff_espn`).
+- Both providers offer Matchups, Standings and Rosters, with the provider's status chip plus an ESPN injury-report overlay, a my-team highlight and Import to My Players. Fantasy data is never cached by the service worker.
+
 ## Yahoo Fantasy tab
 
 `yahoo.js` / `yahoo.css` add the **Fantasy** tab. Yahoo OAuth and the API proxy run in the `injury-push` Worker (`/yahoo/login`, `/yahoo/callback`, `/yahoo/api`, `/yahoo/logout`, `/yahoo/claim`). The app only keeps a random session id in localStorage (`ir_yahoo_sid`) and sends it as `Authorization: Bearer`. Yahoo data is fetched live and is never cached by the service worker.

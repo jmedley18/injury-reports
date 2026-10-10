@@ -138,15 +138,16 @@ function errHtml(e){if(/not authorized to perform/i.test(e&&e.message||''))retur
   return e instanceof Reauth?'':`<div class="errbox" style="margin:0 0 12px">⚠️ Couldn't load from Yahoo (${esc(e.message)}). Tap ↻ to try again.</div>`;}
 
 /* ---- views ---- */
+const hubBack=()=>`<button class="y-back" id="yhub">‹ Fantasy</button>`;
 function viewConnect(){
-  return noticeHtml()+`<div class="glass y-hero"><div class="y-logo">Y!</div><h2>Yahoo Fantasy</h2>
+  return hubBack()+noticeHtml()+`<div class="glass y-hero"><div class="y-logo">Y!</div><h2>Yahoo Fantasy</h2>
     <p>Connect your Yahoo account to see your fantasy leagues right here, next to the injury reports.</p>
     <ul><li>📅 Weekly matchups with live and projected points</li><li>🏆 League standings</li><li>📋 Every roster, with ESPN injury statuses overlaid</li><li>★ Import your team into My Players for injury alerts</li></ul>
     <button class="btn y-btn" id="yconnect">Connect Yahoo</button>
     <div class="note">Read-only access. You sign in on Yahoo's own page; Sideline Status never sees your password and can't make moves in your leagues. Disconnect any time.</div></div>`;
 }
 function viewLeagues(){
-  let h=noticeHtml();
+  let h=hubBack()+noticeHtml();
   if(Y.err)h+=errHtml(Y.err);
   if(!Y.leagues)return h+(Y.err?`<button class="btn sec" id="ydisc">Disconnect Yahoo</button>`:`<div class="glass empty"><div class="spinner"></div>Loading your Yahoo leagues…</div>`);
   if(!Y.leagues.length)h+=msgCard('🤷','No current-season leagues found','Your Yahoo account has no NFL, MLB, NBA or NHL leagues this season yet. Join or create one on Yahoo, then tap ↻.');
@@ -246,11 +247,11 @@ async function refresh(force){
 /* ---- render ---- */
 function draw(){
   const v=$('view');
-  if(!Y.sid){v.innerHTML=viewConnect();$('yconnect').onclick=connect;return;}
+  if(!Y.sid){v.innerHTML=viewConnect();$('yconnect').onclick=connect;$('yhub').onclick=()=>{location.hash='fantasy';};return;}
   const {lk}=route();const l=lk&&findL(lk);
   if(!l){v.innerHTML=viewLeagues();
     v.querySelectorAll('[data-lk]').forEach(b=>b.onclick=()=>{location.hash='yahoo/'+encodeURIComponent(b.dataset.lk);});
-    const d=$('ydisc');if(d)d.onclick=disconnect;
+    const d=$('ydisc');if(d)d.onclick=disconnect;$('yhub').onclick=()=>{location.hash='fantasy';};
     if(lk&&Y.leagues)location.hash='yahoo';return;}
   let h=noticeHtml()+leagueHeader(l)+(Y.err?errHtml(Y.err):'');
   const w=Y.week[l.key]||l.week;
