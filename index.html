@@ -28,6 +28,7 @@
 <link rel="preconnect" href="https://a.espncdn.com">
 <link rel="stylesheet" href="scores.css"><!-- scores -->
 <link rel="stylesheet" href="ads.css"><!-- ads -->
+<link rel="stylesheet" href="yahoo.css"><!-- yahoo -->
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html{background:#050b1f}
@@ -194,7 +195,7 @@
   .warnbox{font-size:13px;line-height:1.45;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);border-radius:12px;padding:10px 12px;margin-top:10px}
   .errbox{font-size:13px;line-height:1.45;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);border-radius:12px;padding:10px 12px;margin-top:10px}
   .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 14px);pointer-events:none;transform:translateX(-50%);background:rgba(14,26,62,.95);border:1px solid rgba(255,255,255,.2);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.45)}
-.tabs .tab{font-size:13px;letter-spacing:.2px;padding:10px 0} /* scores: 5 tabs */
+.tabs{grid-template-columns:1.25fr 1.1fr 1.2fr .9fr .9fr .9fr;gap:3px} .tabs .tab{font-size:12.5px;letter-spacing:0;padding:10px 0} /* scores + fantasy: 6 tabs */
 .seo-intro{margin:18px 2px 0;font-size:12.5px;line-height:1.55;opacity:.62;text-align:center} /* seo */
 .seo-intro h2{font-size:13.5px;margin-bottom:4px}
 .seo-intro p{margin:4px 0}
@@ -232,6 +233,7 @@
 
 <script src="scores.js"></script><!-- scores -->
 <script src="push.js"></script><!-- push -->
+<script src="yahoo.js"></script><!-- yahoo -->
 <script>
 const $=id=>document.getElementById(id);
 const LEAGUES={
@@ -249,7 +251,7 @@ let TEAMS=null; const DATA={}; const LOADING={};
 /* ---------- one-time cleanup from v1 (college football removed) ---------- */
 try{localStorage.removeItem('ir_cache_ncaaf');}catch(e){}
 let favs=LS.get('ir_favs',[]).filter(k=>LEAGUES[k.split(':')[0]]);LS.set('ir_favs',favs);
-let lastView=localStorage.getItem('ir_league');if(lastView!=='mine'&&lastView!=='scores'&&!LEAGUES[lastView])lastView='nfl';
+let lastView=localStorage.getItem('ir_league');if(lastView!=='mine'&&lastView!=='scores'&&lastView!=='yahoo'&&!LEAGUES[lastView])lastView='nfl';
 let state={league:lastView,team:null,q:'',showCleared:false};
 
 /* ---------- My Players storage ---------- */
@@ -405,7 +407,7 @@ function notify(items){
 
 /* ---------- routing ---------- */
 function parseHash(){const [lg,id]=location.hash.slice(1).split('/');
-  if(lg==='mine'||lg==='scores'){state.league=lg;state.team=null;}
+  if(lg==='mine'||lg==='scores'||lg==='yahoo'){state.league=lg;state.team=null;}
   else if(LEAGUES[lg]){state.league=lg;state.team=id||null;}else{state.team=null;}
   localStorage.setItem('ir_league',state.league);}
 window.addEventListener('hashchange',()=>{const pl=state.league;parseHash();if(pl!==state.league)state.q='';state.showCleared=false;closeSheet();render();refreshAll(false);window.scrollTo(0,0);});
@@ -416,11 +418,13 @@ function renderTabs(){
   const c=myCounts();
   $('tabs').innerHTML=`<button class="tab ${state.league==='mine'?'on':''}" data-lg="mine">${news.length?'<span class="dot"></span>':''}★ Mine${c.inj?`<span class="tb">${c.inj}</span>`:''}</button>`+
     `<button class="tab ${state.league==='scores'?'on':''}" data-lg="scores">Scores</button>`+ /* scores */
+    `<button class="tab ${state.league==='yahoo'?'on':''}" data-lg="yahoo">Fantasy</button>`+ /* yahoo */
     Object.entries(LEAGUES).map(([k,v])=>`<button class="tab ${k===state.league?'on':''}" data-lg="${k}">${v.label}</button>`).join('');
   $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{location.hash=b.dataset.lg;});
 }
 function renderMeta(){
   if(state.league==='scores')return Scores.renderMeta(); /* scores */
+  if(state.league==='yahoo')return Yahoo.renderMeta(); /* yahoo */
   if(state.league==='mine'){
     const ds=Object.keys(LEAGUES).map(l=>DATA[l]).filter(Boolean);
     $('season').textContent='My Players';$('season').className='pill';
@@ -724,14 +728,16 @@ function renderError(msg){
 function render(){
   renderTabs();renderMeta();
   if(state.league==='scores')Scores.render(); /* scores */
+  else if(state.league==='yahoo')Yahoo.render(); /* yahoo */
   else if(state.league==='mine')renderMine();else if(state.team)renderTeam();else renderList();
 }
 
 async function refreshAll(force){
   $('refresh').classList.add('spin');
   // load the current view's league first, then the rest (needed for My Players + starred teams + change alerts)
-  const first=(state.league==='mine'||state.league==='scores')?null:state.league;
+  const first=(state.league==='mine'||state.league==='scores'||state.league==='yahoo')?null:state.league;
   if(state.league==='scores')Scores.refresh(force); /* scores */
+  if(state.league==='yahoo'&&force)Yahoo.refresh(true); /* yahoo */
   let err=null;
   try{
     if(first){try{await load(first,force);}catch(e){err=e;}if(!$('sheet').classList.contains('hidden'))renderTabs();else render();}
