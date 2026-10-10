@@ -232,7 +232,7 @@
     <header>
       <img src="icon-192.png" alt="">
       <div><h1>Sideline Status</h1><div class="sub">Live injury reports, scores &amp; fantasy alerts</div></div>
-      <div class="hdr-r"><button class="icon-btn" id="refresh" aria-label="Refresh">↻</button></div>
+      <div class="hdr-r"><button class="icon-btn" id="settings" aria-label="Settings">⚙️</button><button class="icon-btn" id="refresh" aria-label="Refresh">↻</button></div>
     </header>
     <div class="tabs" id="tabs"></div>
     <div class="meta"><span class="pill" id="season">…</span><span class="upd" id="upd"></span></div>
@@ -250,7 +250,7 @@
   </div>
   <div id="sheet" class="hidden"><div class="sh" id="shc"></div></div>
 
-<script src="scores.js"></script><!-- scores -->
+<script src="scores.js"></script><script src="watch.js"></script><!-- scores -->
 <script src="push.js"></script><!-- push -->
 <script src="yahoo.js"></script><!-- yahoo -->
 <script src="fantasy.js"></script><!-- fantasy: Sleeper + ESPN + hub -->
@@ -788,6 +788,7 @@ async function refreshAll(force){
   if(err)renderError(err.message);
 }
 $('refresh').onclick=()=>refreshAll(true);
+$('settings').onclick=()=>window.Watch&&Watch.openSettings(false);
 setInterval(()=>{renderMeta();},30000);
 setInterval(()=>{if(!document.hidden)refreshAll(true);},5*60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshAll(false);});

@@ -86,7 +86,8 @@ function teamRow(g,t,other,mine){
 }
 function watchRow(g){
   if(!g.watch||!g.watch.length)return'';
-  return `<div class="sc-watch"><span class="sc-wl">📺 Watch on</span>${g.watch.map(w=>`<span class="sc-ch ${w.kind==='stream'?'stream':''} ${w.local?'local':''}">${w.kind==='stream'?'▶ ':''}${esc(w.name)}${w.local?` <small>(local${w.team?' · '+esc(w.team):''})</small>`:''}</span>`).join('')}</div>`;
+  const btn=window.Watch&&Watch.has(g)?`<button class="sc-wbtn" data-watch="${esc(g.id)}">▶ Watch</button>`:'';
+  return `<div class="sc-watch"><span class="sc-wl">📺 Watch on</span>${btn}${g.watch.map(w=>`<span class="sc-ch ${w.kind==='stream'?'stream':''} ${w.local?'local':''}">${w.kind==='stream'?'▶ ':''}${esc(w.name)}${w.local?` <small>(local${w.team?' · '+esc(w.team):''})</small>`:''}</span>`).join('')}</div>`;
 }
 function card(g,mine){
   const isMine=mine.has(g.home.id)||mine.has(g.away.id);
@@ -129,6 +130,7 @@ function wire(){
   v.querySelectorAll('[data-sl]').forEach(b=>b.onclick=()=>{S.lg=b.dataset.sl;localStorage.setItem('ir_sc_lg',S.lg);S.err=null;render();renderMetaScores();refresh(false);});
   $('scMine').onclick=()=>{S.mine=!S.mine;localStorage.setItem('ir_sc_mine',S.mine?'1':'0');render();};
   v.querySelectorAll('[data-team]').forEach(r=>r.onclick=()=>{location.hash=r.dataset.team;});
+  v.querySelectorAll('[data-watch]').forEach(b=>b.onclick=e=>{e.stopPropagation();const d=S.data[S.lg];const g=d&&d.events.find(x=>String(x.id)===b.dataset.watch);if(g)Watch.open(g);});
 }
 const active=()=>typeof state!=='undefined'&&state.league==='scores';
 function renderMetaScores(){
