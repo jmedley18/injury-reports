@@ -161,7 +161,7 @@ function viewLeagues(){
   return h;
 }
 function leagueHeader(l){
-  return `<div class="y-lh"><button class="icon-btn" id="yback" aria-label="Back">‹</button>${l.logo?`<img src="${esc(l.logo)}" alt="">`:''}<div><b>${esc(l.name)}</b><small>${SPORT[l.code]||''} · ${esc(l.season)}</small></div></div>
+  return `<div class="y-lh"><button class="icon-btn" id="yback" aria-label="Back">‹</button>${l.logo?`<img loading="lazy" decoding="async" src="${esc(l.logo)}" alt="">`:''}<div><b>${esc(l.name)}</b><small>${SPORT[l.code]||''} · ${esc(l.season)}</small></div></div>
     <div class="y-subs">${['matchups','standings','rosters'].map(s=>`<button class="y-sub ${Y.sub===s?'on':''}" data-sub="${s}">${s[0].toUpperCase()+s.slice(1)}</button>`).join('')}</div>`;
 }
 function viewMatchups(l,d){
@@ -211,7 +211,7 @@ function openImport(l,t){
   const players=(t.players||[]).filter(p=>p.ptype!=='DT'&&p.pos!=='DEF').map(p=>({lg:l.code,id:'',n:p.name,team:espnAbbr(p.team),pos:p.pos,hs:p.img,src:'yahoo'}));
   const skipped=(t.players||[]).length-players.length;const r=roster();
   openSheet(shHead('Import '+esc(t.name))+`<div class="note" style="margin:0 0 6px">${players.length} players from ${esc(l.name)}</div>`+
-    players.map(p=>{const e=findEntry({...p});return `<div class="ri">${p.hs?`<img class="h" src="${esc(p.hs)}" alt="" onerror="this.style.visibility='hidden'">`:`<div class="ph">${esc(initials(p.n))}</div>`}<div class="rb">${esc(p.n)}<small>${esc(p.pos)} · ${esc(p.team||'Free agent')}</small></div>${isInj(e)?`<span class="st" style="--s:${colOf(e.st)[0]};--sb:${colOf(e.st)[1]};--st:${colOf(e.st)[2]}">${esc(e.st)}</span>`:''}</div>`;}).join('')+
+    players.map(p=>{const e=findEntry({...p});return `<div class="ri">${p.hs?`<img loading="lazy" decoding="async" class="h" src="${esc(p.hs)}" alt="" onerror="this.style.visibility='hidden'">`:`<div class="ph">${esc(initials(p.n))}</div>`}<div class="rb">${esc(p.n)}<small>${esc(p.pos)} · ${esc(p.team||'Free agent')}</small></div>${isInj(e)?`<span class="st" style="--s:${colOf(e.st)[0]};--sb:${colOf(e.st)[1]};--st:${colOf(e.st)[2]}">${esc(e.st)}</span>`:''}</div>`;}).join('')+
     (skipped?`<div class="warnbox">Skipped ${skipped} team defense${skipped>1?'s':''}. Team defenses don't have injury reports.</div>`:'')+
     `<label for="yn">Save as list</label><input id="yn" maxlength="30" value="${esc(l.name)}"><button class="btn" id="ynew">Save as new list</button>${r?`<button class="btn sec" id="yadd">Add to "${esc(r.name)}" instead</button>`:''}`);
   onClose(render);

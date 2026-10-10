@@ -123,7 +123,7 @@ const spin=t=>`<div class="glass empty"><div class="spinner"></div>${esc(t)}</di
 const msg=(i,t,b)=>`<div class="glass empty"><div class="big">${i}</div><b>${t}</b>${b?`<small>${b}</small>`:''}</div>`;
 function header(L){
   const PV={sl:'🌙 Sleeper',espn:'🅴 ESPN Fantasy'}[L.prov];
-  return `<div class="y-lh"><button class="icon-btn" id="fback" aria-label="Back">‹</button>${L.logo?`<img src="${esc(L.logo)}" alt="" onerror="this.remove()">`:''}<div><b>${esc(L.name)}</b><small>${PV} · ${esc(L.season)}${L.numTeams?' · '+L.numTeams+' teams':''}</small></div></div>
+  return `<div class="y-lh"><button class="icon-btn" id="fback" aria-label="Back">‹</button>${L.logo?`<img loading="lazy" decoding="async" src="${esc(L.logo)}" alt="" onerror="this.remove()">`:''}<div><b>${esc(L.name)}</b><small>${PV} · ${esc(L.season)}${L.numTeams?' · '+L.numTeams+' teams':''}</small></div></div>
     <div class="y-subs">${['matchups','standings','rosters'].map(s=>`<button class="y-sub ${F.sub===s?'on':''}" data-sub="${s}">${s[0].toUpperCase()+s.slice(1)}</button>`).join('')}</div>`;}
 function vMatchups(d,w,list){
   const L=d.league;
@@ -167,7 +167,7 @@ function openImport(d,t){
     return{lg:'nfl',id:aid,n:p.name,team:p.team,pos:p.pos,hs:!p.espnId&&aid?`https://a.espncdn.com/i/headshots/nfl/players/full/${aid}.png`:(p.img||''),src:d.league.prov==='sl'?'sleeper':'espnff'};});
   const skipped=t.players.filter(p=>p.def).length;const r=roster();
   openSheet(shHead('Import '+esc(t.name))+`<div class="note" style="margin:0 0 6px">${players.length} players from ${esc(d.league.name)}</div>`+
-    players.map(p=>{const e=findEntry({...p});return `<div class="ri">${p.hs?`<img class="h" src="${esc(p.hs)}" alt="" onerror="this.style.visibility='hidden'">`:`<div class="ph">${esc(initials(p.n))}</div>`}<div class="rb">${esc(p.n)}<small>${esc(p.pos)} · ${esc(p.team||'Free agent')}</small></div>${isInj(e)?`<span class="st" style="--s:${colOf(e.st)[0]};--sb:${colOf(e.st)[1]};--st:${colOf(e.st)[2]}">${esc(e.st)}</span>`:''}</div>`;}).join('')+
+    players.map(p=>{const e=findEntry({...p});return `<div class="ri">${p.hs?`<img loading="lazy" decoding="async" class="h" src="${esc(p.hs)}" alt="" onerror="this.style.visibility='hidden'">`:`<div class="ph">${esc(initials(p.n))}</div>`}<div class="rb">${esc(p.n)}<small>${esc(p.pos)} · ${esc(p.team||'Free agent')}</small></div>${isInj(e)?`<span class="st" style="--s:${colOf(e.st)[0]};--sb:${colOf(e.st)[1]};--st:${colOf(e.st)[2]}">${esc(e.st)}</span>`:''}</div>`;}).join('')+
     (skipped?`<div class="warnbox">Skipped ${skipped} team defense${skipped>1?'s':''}. Team defenses don't have injury reports.</div>`:'')+
     `<label for="fin">Save as list</label><input id="fin" maxlength="30" value="${esc(d.league.name)}"><button class="btn" id="finew">Save as new list</button>${r?`<button class="btn sec" id="fiadd">Add to "${esc(r.name)}" instead</button>`:''}`);
   onClose(render);

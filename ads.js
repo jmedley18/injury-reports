@@ -28,7 +28,7 @@ function paint(el,a){
 const ADSENSE_ON=/^ca-pub-\d{10,}$/.test(ADSENSE_CLIENT);
 let adsenseLoaded=false;
 function loadAdsense(){
-  if(!ADSENSE_ON||adsenseLoaded)return;adsenseLoaded=true;
+  if(!ADSENSE_ON||adsenseLoaded||window.IR_SAFE)return;adsenseLoaded=true;
   if(document.querySelector('script[src*="pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"]'))return; // already in <head> statically
   const sc=document.createElement('script');sc.async=true;sc.crossOrigin='anonymous';
   sc.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client='+encodeURIComponent(ADSENSE_CLIENT);
@@ -48,6 +48,7 @@ const SHOW_SB=!(SHOW_GS&&(ADSENSE_MODE==='replace'||ADSENSE_MODE==='alternate'))
 let gsMounted=false;
 function mount(){
   const slot=document.getElementById('adSlot');if(!slot)return;
+  if(window.IR_SAFE){slot.innerHTML='';return;} // safe mode after a crash: no ads
   loadAdsense();
   if(SHOW_GS&&!gsMounted){let g=document.getElementById('adGs');if(!g){g=document.createElement('div');g.id='adGs';slot.parentNode.insertBefore(g,slot);}gsMounted=mountAdsense(g);}
   if(!SHOW_SB){slot.innerHTML='';return;}

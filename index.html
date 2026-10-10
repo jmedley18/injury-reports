@@ -2,6 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>/* crash guard: runs first. A boot that never finished (WebContent crash/jetsam) leaves ir_booting set, so the next open starts in safe mode. */
+(function(){try{
+  var o=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){try{return o.call(this,k,v);}catch(e){try{this.removeItem('ir_sleeper_db');return o.call(this,k,v);}catch(e2){console.warn('storage full, skipped',k);}}};
+  var ls=localStorage,now=Date.now(),crashed=ls.getItem('ir_booting')==='1',until=+(ls.getItem('ir_safe_until')||0);
+  if(/[?&]safe=1/.test(location.search)||location.hash==='#safe'){until=now+864e5;ls.setItem('ir_safe_until',String(until));}
+  if(crashed){until=now+864e5;ls.setItem('ir_safe_until',String(until));}
+  window.IR_SAFE=until>now;window.IR_CRASHED=crashed;
+  if(window.IR_SAFE){document.documentElement.classList.add('safe');(window.adsbygoogle=window.adsbygoogle||[]).pauseAdRequests=1;}
+  ls.setItem('ir_booting','1');ls.removeItem('ir_sleeper_db');
+  var done=function(){try{ls.removeItem('ir_booting');}catch(e){}};
+  addEventListener('pagehide',done);document.addEventListener('visibilitychange',function(){if(document.hidden)done();else ls.setItem('ir_booting','1'),setTimeout(done,8000);});
+  window.IR_BOOT_OK=function(){setTimeout(done,8000);};
+}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -37,7 +50,7 @@
   button{font-family:inherit}
   /* ---------- stadium-at-night background ---------- */
   #bg{position:fixed;inset:0;z-index:-2;overflow:hidden;background:radial-gradient(ellipse at 50% -10%,#1e3a8a 0%,#0b1a45 38%,#050b1f 75%)}
-  .beam{position:absolute;top:-8vh;width:34vmax;height:120vh;transform-origin:50% 0;background:linear-gradient(rgba(255,255,255,.28),rgba(160,200,255,.06) 55%,transparent 80%);clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);filter:blur(6px);mix-blend-mode:screen}
+  .beam{position:absolute;top:-8vh;width:34vmax;height:120vh;transform-origin:50% 0;background:linear-gradient(rgba(255,255,255,.28),rgba(160,200,255,.06) 55%,transparent 80%);clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);will-change:transform;opacity:.85}
   .bm1{left:-12vmax;animation:sway1 9s ease-in-out infinite alternate}
   .bm2{right:-12vmax;animation:sway2 11s ease-in-out infinite alternate}
   .bm3{left:30%;opacity:.45;animation:sway3 13s ease-in-out infinite alternate}
@@ -48,11 +61,16 @@
   .lamp.l{left:-30px}.lamp.r{right:-30px}
   .field{position:absolute;left:-50%;right:-50%;bottom:-8vh;height:58vh;transform:perspective(420px) rotateX(58deg);transform-origin:50% 100%;
     background:repeating-linear-gradient(0deg,rgba(255,255,255,.22) 0 3px,transparent 3px 70px),repeating-linear-gradient(0deg,#0d6b33 0 140px,#0a5a2b 140px 280px);
-    -webkit-mask-image:linear-gradient(to top,#000 30%,transparent 100%);mask-image:linear-gradient(to top,#000 30%,transparent 100%);opacity:.75;animation:roll 14s linear infinite}
-  @keyframes roll{from{background-position:0 0,0 0}to{background-position:0 280px,0 280px}}
+    -webkit-mask-image:linear-gradient(to top,#000 30%,transparent 100%);mask-image:linear-gradient(to top,#000 30%,transparent 100%);opacity:.75}
   .haze{position:absolute;inset:auto 0 0 0;height:45vh;background:linear-gradient(to top,rgba(5,11,31,.75),transparent)}
   #sparks{position:fixed;inset:0;z-index:-1;pointer-events:none}
   @media (prefers-reduced-motion:reduce){.beam,.field{animation:none}}
+  html.paused #bg *{animation-play-state:paused!important}
+  html.safe .beam{animation:none!important}html.safe #sparks,html.safe .lamp{display:none!important}
+  html.safe *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  html.safe .glass{background:rgba(20,32,70,.92)}
+  .safe-note{display:flex;gap:10px;align-items:center;font-size:12.5px;line-height:1.35;background:rgba(250,204,21,.12);border:1px solid rgba(250,204,21,.35);border-radius:14px;padding:9px 12px;margin-bottom:12px}
+  .safe-note button{flex:none;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:6px 10px;font-weight:700;font-size:12px}
 
   .wrap{width:100%;max-width:460px}
   header{display:flex;align-items:center;gap:12px;margin:14px 0 14px}
@@ -459,7 +477,7 @@ function renderList(){
   const rest=all.filter(t=>!isFav(lg,t.id)&&match(t));
   const others=favs.map(k=>k.split(':')).filter(([l])=>l!==lg&&TEAMS[l]).map(([l,id])=>[l,teamBy(l,id)]).filter(x=>x[1]);
   let h='';
-  if(others.length&&!q)h+=`<div class="section">My other teams</div><div class="myrow">${others.map(([l,t])=>`<button class="mychip" data-go="${l}/${t.id}"><img src="${esc(t.logo)}" alt="">${esc(t.nick)} <small>${LEAGUES[l].label}</small></button>`).join('')}</div>`;
+  if(others.length&&!q)h+=`<div class="section">My other teams</div><div class="myrow">${others.map(([l,t])=>`<button class="mychip" data-go="${l}/${t.id}"><img loading="lazy" decoding="async" src="${esc(t.logo)}" alt="">${esc(t.nick)} <small>${LEAGUES[l].label}</small></button>`).join('')}</div>`;
   if(fav.length)h+=`<div class="section">★ Favorites</div><div class="grid">${fav.map(t=>teamCard(lg,t)).join('')}</div>`;
   if(rest.length)h+=`<div class="section">${fav.length?'All teams':'Pick a team'}</div><div class="grid">${rest.map(t=>teamCard(lg,t)).join('')}</div>`;
   if(!fav.length&&!rest.length)h+=`<div class="glass empty">No teams match "${esc(state.q)}"</div>`;
@@ -504,7 +522,7 @@ function renderTeam(){
   const fav=isFav(lg,t.id);
   let h=`<button class="back" id="back">‹ ${LEAGUES[lg].label} teams</button>
   <div class="thero" style="--c:#${esc(t.color)};--c2:#${esc(t.alt&&t.alt!=='ffffff'&&t.alt!=='000000'?t.alt:'0b1a45')}">
-    <div class="trow"><img src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">
+    <div class="trow"><img loading="lazy" decoding="async" src="${esc(t.logo)}" alt="" onerror="this.style.visibility='hidden'">
       <div style="min-width:0"><div class="tname">${esc(t.name)}</div><div class="tsub">${esc(LEAGUES[lg].label)} · Injury report${fav?' · alerts on':''}</div></div>
       <button class="icon-btn star ${fav?'on':''}" id="fav" aria-label="Favorite">${fav?'★':'☆'}</button></div>`;
   if(!d){h+=`</div><div class="skel"></div><div class="skel"></div><div class="skel"></div>`;$('view').innerHTML=h;wireTeam(lg,t);return;}
@@ -531,7 +549,7 @@ function wireTeam(lg,t){
 function newsHtml(){
   if(!news.length)return'';
   return `<div class="glass news"><div class="newsh">🔔 <b>What's new</b><span style="opacity:.65;font-size:12px">${news.length} change${news.length>1?'s':''}</span><button id="gotit">Got it</button></div>
-    ${news.slice(0,12).map(n=>{const t=teamByAbbr(n.lg,n.team);return `<div class="ni" ${t?`data-go="${n.lg}/${t.id}"`:''}>${t?`<img src="${esc(t.logo)}" alt="">`:''}<div class="nb"><b>${esc(n.n)}</b> · ${esc(n.from||'Healthy')} → <b>${esc(n.to||'Cleared')}</b><small>${esc(LEAGUES[n.lg]?LEAGUES[n.lg].label:'')} ${esc(n.team||'')} · ${esc(n.why||'')} · ${esc(ago(n.t))}</small></div><span class="ntag k-${n.kind}">${KIND[n.kind]}</span></div>`;}).join('')}
+    ${news.slice(0,12).map(n=>{const t=teamByAbbr(n.lg,n.team);return `<div class="ni" ${t?`data-go="${n.lg}/${t.id}"`:''}>${t?`<img loading="lazy" decoding="async" src="${esc(t.logo)}" alt="">`:''}<div class="nb"><b>${esc(n.n)}</b> · ${esc(n.from||'Healthy')} → <b>${esc(n.to||'Cleared')}</b><small>${esc(LEAGUES[n.lg]?LEAGUES[n.lg].label:'')} ${esc(n.team||'')} · ${esc(n.why||'')} · ${esc(ago(n.t))}</small></div><span class="ntag k-${n.kind}">${KIND[n.kind]}</span></div>`;}).join('')}
     ${news.length>12?`<div class="note">+${news.length-12} more</div>`:''}</div>`;
 }
 function alertHtml(){return pushPanelHtml();} /* push: one alerts control */
@@ -552,7 +570,7 @@ function renderMine(){
   const unk=rows.filter(x=>x.e===undefined);
   const counts={};inj.forEach(x=>counts[x.e.st]=(counts[x.e.st]||0)+1);
   h+=`<div class="sumrow" style="margin:0 0 12px">${Object.entries(counts).sort((a,b)=>sev(a[0])-sev(b[0])).map(([s,n])=>{const [c]=colOf(s);return `<span class="sum" style="border-color:${c}">${n} ${esc(s)}</span>`}).join('')}<span class="sum" style="border-color:#22c55e">${ok.length} Healthy</span>${unk.length?`<span class="sum">${unk.length} loading</span>`:''}</div>`;
-  const teamLine=(p,e)=>{const lg=p.lg,ab=(e&&e.abbr)||p.team;const t=teamByAbbr(lg,ab);return `${t?`<img class="tlogo" src="${esc(t.logo)}" alt="">`:''}${esc((e&&(e.posName||e.pos))||p.pos||'')} · ${esc(t?t.nick:ab||'Free agent')} <span class="lgc">${LEAGUES[lg].label}</span>`;};
+  const teamLine=(p,e)=>{const lg=p.lg,ab=(e&&e.abbr)||p.team;const t=teamByAbbr(lg,ab);return `${t?`<img loading="lazy" decoding="async" class="tlogo" src="${esc(t.logo)}" alt="">`:''}${esc((e&&(e.posName||e.pos))||p.pos||'')} · ${esc(t?t.nick:ab||'Free agent')} <span class="lgc">${LEAGUES[lg].label}</span>`;};
   if(inj.length)h+=`<div class="section">Injured (${inj.length})</div>`+inj.map((x,i)=>playerCard(x.e,'m'+i,{key:x.p.k,rm:x.p.k,hs:x.p.hs,teamLine:teamLine(x.p,x.e)})).join('');
   if(ok.length)h+=`<div class="section">Healthy / no report (${ok.length})</div>`+ok.map(x=>{const p=x.p,tag=changeTag(p.k);
     return `<div class="glass healthy ${tag?'p hl':''}" style="${tag?'--s:#22c55e':''}">${p.hs?`<img class="hs" src="${esc(p.hs)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;hs ph&quot;>${esc(initials(p.n))}</div>'">`:`<div class="hs ph">${esc(initials(p.n))}</div>`}
@@ -605,8 +623,8 @@ async function espnSearch(q,league,limit,signal){
   return ((await r.json()).items||[]).filter(i=>LEAGUES[i.league]&&i.isActive!==false);
 }
 function resultRow(x,i,added){const t=teamByAbbr(x.lg,x.team);
-  return `<div class="ri">${x.hs?`<img class="h" src="${esc(x.hs)}" alt="" onerror="this.style.visibility='hidden'">`:`<div class="ph">${esc(initials(x.n))}</div>`}
-  <div class="rb">${esc(x.n)}<small>${t?`<img class="tlogo" src="${esc(t.logo)}" alt="">`:''}${esc(x.pos)} · ${esc(x.teamName||x.team||'Free agent')} <span class="lgc">${LEAGUES[x.lg].label}</span></small></div>
+  return `<div class="ri">${x.hs?`<img loading="lazy" decoding="async" class="h" src="${esc(x.hs)}" alt="" onerror="this.style.visibility='hidden'">`:`<div class="ph">${esc(initials(x.n))}</div>`}
+  <div class="rb">${esc(x.n)}<small>${t?`<img loading="lazy" decoding="async" class="tlogo" src="${esc(t.logo)}" alt="">`:''}${esc(x.pos)} · ${esc(x.teamName||x.team||'Free agent')} <span class="lgc">${LEAGUES[x.lg].label}</span></small></div>
   <button class="add ${added?'done':''}" data-i="${i}">${added?'✓':'＋'}</button></div>`;}
 function openSearch(){
   openSheet(shHead('Add players')+`<input id="ps" type="search" placeholder="Player name (NFL, NBA, MLB)" autocomplete="off" enterkeyhint="search"><div id="psr"><div class="note">Start typing a name, e.g. "Mahomes" or "Judge".</div></div>`);
@@ -643,7 +661,7 @@ function openPaste(){
     $('pm').disabled=false;
     const matched=[];const seen=new Set();out.forEach((m,j)=>{if(m&&!seen.has(m.lg+m.id)){seen.add(m.lg+m.id);matched.push({...m,q:names[j]});}});
     const un=names.filter((n,j)=>!out[j]);
-    let h=`<div class="section" style="margin-top:14px">Matched (${matched.length})</div>`+matched.map((x,k)=>`<div class="ri">${x.hs?`<img class="h" src="${esc(x.hs)}" alt="">`:`<div class="ph">${esc(initials(x.n))}</div>`}<div class="rb">${esc(x.n)}<small>${esc(x.pos)} · ${esc(x.teamName||x.team)} <span class="lgc">${LEAGUES[x.lg].label}</span>${norm(x.q)!==norm(x.n)?` · from "${esc(x.q)}"`:''}</small></div><button class="add done" data-x="${k}" aria-label="Skip">✕</button></div>`).join('');
+    let h=`<div class="section" style="margin-top:14px">Matched (${matched.length})</div>`+matched.map((x,k)=>`<div class="ri">${x.hs?`<img loading="lazy" decoding="async" class="h" src="${esc(x.hs)}" alt="">`:`<div class="ph">${esc(initials(x.n))}</div>`}<div class="rb">${esc(x.n)}<small>${esc(x.pos)} · ${esc(x.teamName||x.team)} <span class="lgc">${LEAGUES[x.lg].label}</span>${norm(x.q)!==norm(x.n)?` · from "${esc(x.q)}"`:''}</small></div><button class="add done" data-x="${k}" aria-label="Skip">✕</button></div>`).join('');
     if(un.length)h+=`<div class="warnbox"><b>Couldn't match ${un.length}:</b> ${un.map(esc).join(', ')}<br><span style="opacity:.75">Check the spelling or add them with Search.</span></div>`;
     if(matched.length)h+=`<button class="btn" id="padd">Add ${matched.length} player${matched.length>1?'s':''} to "${esc((roster()||{name:'My Players'}).name)}"</button>`;
     $('pr').innerHTML=h;
@@ -657,16 +675,20 @@ function openPaste(){
 /* -- Sleeper import -- */
 async function sj(path){const r=await fetch(SLEEPER+path);if(!r.ok)throw new Error('Sleeper HTTP '+r.status);const t=await r.text();return t?JSON.parse(t):null;}
 let SLEEPER_DB=null;
+// Trimmed player map comes from our Worker (~0.4 MB) instead of Sleeper's ~14 MB /players/nfl, and is kept in IndexedDB (not localStorage).
+const IDB={db:null,open(){return this.db||(this.db=new Promise((ok,no)=>{try{const r=indexedDB.open('sideline',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error);}catch(e){no(e);}}));},
+  async get(k){try{const db=await this.open();return await new Promise(ok=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(undefined);});}catch(e){return undefined;}},
+  async set(k,v){try{const db=await this.open();await new Promise(ok=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=t.onerror=t.onabort=()=>ok();});}catch(e){}}};
 async function sleeperDB(status){
   if(SLEEPER_DB)return SLEEPER_DB;
-  const c=LS.get('ir_sleeper_db',null);
+  const c=await IDB.get('sleeper_players');
   if(c&&c.v===2&&Date.now()-c.t<864e5){SLEEPER_DB=c.p;return SLEEPER_DB;}
-  status&&status('Downloading the Sleeper player list (about 2.5 MB, once a day)…');
+  status&&status('Downloading the Sleeper player list (once a day)…');
   try{
-    const all=await sj('/players/nfl');const p={};
-    for(const [id,x] of Object.entries(all))if(x.active||x.team){p[id]=[x.full_name||((x.first_name||'')+' '+(x.last_name||'')).trim(),x.team||'',x.position||'',x.espn_id?String(x.espn_id):''];if(x.injury_status)p[id].push(x.injury_status,x.injury_body_part||'');}
-    LS.set('ir_sleeper_db',{v:2,t:Date.now(),p});SLEEPER_DB=p;return p;
-  }catch(e){if(c){SLEEPER_DB=c.p;return c.p;}throw e;}
+    const r=await fetch('https://injury-push.jmedley.workers.dev/sleeper/players');if(!r.ok)throw new Error('Player list HTTP '+r.status);
+    const d=await r.json();if(!d||!d.p)throw new Error('Player list unavailable');
+    IDB.set('sleeper_players',{v:2,t:Date.now(),p:d.p});SLEEPER_DB=d.p;return d.p;
+  }catch(e){if(c&&c.p){SLEEPER_DB=c.p;return c.p;}throw e;}
 }
 function openSleeper(){
   const S={user:null,leagues:[],league:null,rosters:[],users:[]};
@@ -714,7 +736,7 @@ function openSleeper(){
       }
       const r=roster();
       $('shc').innerHTML=shHead('Import '+esc(x.name))+`<div class="note" style="margin:0 0 6px">${players.length} players from ${esc(l.name)}</div>`+
-        players.map(p=>{const e=findEntry({...p});return `<div class="ri"><img class="h" src="${esc(p.hs)}" alt="" onerror="this.style.visibility='hidden'"><div class="rb">${esc(p.n)}<small>${esc(p.pos)} · ${esc(p.team||'Free agent')}</small></div>${isInj(e)?`<span class="st" style="--s:${colOf(e.st)[0]};--sb:${colOf(e.st)[1]};--st:${colOf(e.st)[2]}">${esc(e.st)}</span>`:'<span class="ok">✓</span>'}</div>`;}).join('')+
+        players.map(p=>{const e=findEntry({...p});return `<div class="ri"><img loading="lazy" decoding="async" class="h" src="${esc(p.hs)}" alt="" onerror="this.style.visibility='hidden'"><div class="rb">${esc(p.n)}<small>${esc(p.pos)} · ${esc(p.team||'Free agent')}</small></div>${isInj(e)?`<span class="st" style="--s:${colOf(e.st)[0]};--sb:${colOf(e.st)[1]};--st:${colOf(e.st)[2]}">${esc(e.st)}</span>`:'<span class="ok">✓</span>'}</div>`;}).join('')+
         (skipped.length?`<div class="warnbox">Skipped ${skipped.length}: ${skipped.map(esc).join(', ')}. Team defenses don't have injury reports.</div>`:'')+
         `<label for="sn">Save as list</label><input id="sn" maxlength="30" value="${esc(l.name)}"><button class="btn" id="snew">Save as new list</button>${r?`<button class="btn sec" id="sadd">Add to "${esc(r.name)}" instead</button>`:''}`;
       onClose(render);
@@ -729,14 +751,24 @@ function renderError(msg){
   const e=document.createElement('div');e.className='glass err';e.innerHTML=`⚠️ Couldn't load the latest injury reports (${esc(msg)}). Check your connection and tap ↻ to try again.`;
   $('view').prepend(e);
 }
+function safeNote(){
+  if(!window.IR_SAFE||document.querySelector('.safe-note'))return;
+  const d=document.createElement('div');d.className='safe-note';
+  d.innerHTML=`<span>🛟 <b>Safe mode.</b> ${window.IR_CRASHED?'Sideline Status restarted after a problem, so':'For now,'} animations, blur effects and ads are off.</span><button type="button">Turn off</button>`;
+  d.querySelector('button').onclick=()=>{localStorage.removeItem('ir_safe_until');localStorage.removeItem('ir_booting');if(location.hash==='#safe')history.replaceState(null,'',location.pathname+'#nfl');location.reload();};
+  $('view').parentNode.insertBefore(d,$('view'));
+}
 function render(){
   renderTabs();renderMeta();
   if(state.league==='scores')Scores.render(); /* scores */
   else if(state.league==='yahoo')Yahoo.render(); /* yahoo */
   else if(state.league==='fantasy')Fantasy.render(); /* fantasy */
   else if(state.league==='mine')renderMine();else if(state.team)renderTeam();else renderList();
+  safeNote();
 }
 
+function neededLeagues(){const n=new Set();for(const f of favs)n.add(f.split(':')[0]);for(const p of allTracked())n.add(p.lg);
+  if(LEAGUES[state.league])n.add(state.league);if(state.league==='fantasy')n.add('nfl');if(state.league==='yahoo')Object.keys(LEAGUES).forEach(l=>n.add(l));return Object.keys(LEAGUES).filter(l=>n.has(l));}
 async function refreshAll(force){
   $('refresh').classList.add('spin');
   // load the current view's league first, then the rest (needed for My Players + starred teams + change alerts)
@@ -747,7 +779,8 @@ async function refreshAll(force){
   let err=null;
   try{
     if(first){try{await load(first,force);}catch(e){err=e;}if(!$('sheet').classList.contains('hidden'))renderTabs();else render();}
-    const res=await Promise.allSettled(Object.keys(LEAGUES).filter(l=>l!==first).map(l=>load(l,force)));
+    // only the leagues this person actually uses (starred teams + saved players); other tabs load when opened
+    const res=await Promise.allSettled(neededLeagues().filter(l=>l!==first).map(l=>load(l,force)));
     res.forEach(r=>{if(r.status==='rejected'&&!err&&state.league==='mine')err=r.reason;});
     baseline();checkChanges();
   }finally{$('refresh').classList.remove('spin');}
@@ -769,14 +802,19 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshAll
 })();
 
 /* ---------- sparks (stadium light particles) ---------- */
-(()=>{const c=$('sparks'),x=c.getContext('2d');let W,H,P=[];
-  function rs(){W=c.width=innerWidth*devicePixelRatio;H=c.height=innerHeight*devicePixelRatio;c.style.width=innerWidth+'px';c.style.height=innerHeight+'px';
-    P=Array.from({length:45},()=>({x:Math.random()*W,y:Math.random()*H,r:(Math.random()*1.4+.3)*devicePixelRatio,v:(Math.random()*.25+.05)*devicePixelRatio,a:Math.random()}));}
-  rs();addEventListener('resize',rs);
+// DPR capped at 1.5 (iPhone is 3, which made a full-screen 3x canvas), ~30 fps, paused while hidden, off in safe mode.
+(()=>{const c=$('sparks');if(window.IR_SAFE||!c){if(c)c.remove();return;}
+  const x=c.getContext('2d');if(!x)return;let W,H,D,P=[],raf=0,last=0;
+  function rs(){D=Math.min(window.devicePixelRatio||1,1.5);W=c.width=Math.round(innerWidth*D);H=c.height=Math.round(innerHeight*D);c.style.width=innerWidth+'px';c.style.height=innerHeight+'px';
+    P=Array.from({length:36},()=>({x:Math.random()*W,y:Math.random()*H,r:(Math.random()*1.4+.3)*D,v:(Math.random()*.5+.1)*D,a:Math.random()}));}
+  rs();let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(rs,200);});
   const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  (function f(){x.clearRect(0,0,W,H);for(const p of P){p.y-=p.v;p.a+=.02;if(p.y<0){p.y=H;p.x=Math.random()*W;}
-    x.globalAlpha=.25+.35*Math.abs(Math.sin(p.a));x.fillStyle='#dbeafe';x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill();}
-    if(!still)requestAnimationFrame(f);})();
+  function f(t){raf=0;if(document.hidden)return;if(t-last>=33){last=t;x.clearRect(0,0,W,H);x.fillStyle='#dbeafe';
+    for(const p of P){p.y-=p.v;p.a+=.04;if(p.y<0){p.y=H;p.x=Math.random()*W;}x.globalAlpha=.25+.35*Math.abs(Math.sin(p.a));x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill();}}
+    if(!still)raf=requestAnimationFrame(f);}
+  const start=()=>{if(!raf&&!document.hidden)raf=requestAnimationFrame(f);};
+  document.addEventListener('visibilitychange',()=>{document.documentElement.classList.toggle('paused',document.hidden);if(document.hidden){cancelAnimationFrame(raf);raf=0;}else start();});
+  start();
 })();
 
 /* ---------- boot ---------- */
@@ -785,9 +823,10 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshAll
   renderTabs();renderMeta();$('view').innerHTML='<div class="skel"></div><div class="skel"></div>';
   try{TEAMS=await (await fetch('teams.json')).json();}catch(e){$('view').innerHTML='<div class="glass err">Couldn\'t load the team list. Check your connection and reload.</div>';return;}
   // show the last saved copy instantly (marked offline) while fresh data loads
-  for(const l of Object.keys(LEAGUES)){const c=LS.get('ir_cache_'+l,null);if(c&&!DATA[l]){c.offline=true;DATA[l]=index(c);}}
+  for(const l of neededLeagues()){const c=LS.get('ir_cache_'+l,null);if(c&&!DATA[l]){c.offline=true;DATA[l]=index(c);}}
   render();
-  refreshAll(true);
+  if(window.IR_BOOT_OK)IR_BOOT_OK();
+  setTimeout(()=>refreshAll(true),window.IR_SAFE?1500:50);
 })();
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(()=>syncPush(false)).catch(()=>{}));
 </script>
